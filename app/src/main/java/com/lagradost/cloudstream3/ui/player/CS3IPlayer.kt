@@ -138,6 +138,7 @@ const val toleranceAfterUs = 300_000L
 
 @OptIn(UnstableApi::class)
 class CS3IPlayer : IPlayer {
+    private var appContext: Context? = null
     private var playerListener: Player.Listener? = null
     private var isPlaying = false
     private var exoPlayer: ExoPlayer? = null
@@ -291,6 +292,7 @@ class CS3IPlayer : IPlayer {
         preview: Boolean,
     ) {
         Log.i(TAG, "loadPlayer")
+        appContext = context.applicationContext
         if (sameEpisode) {
             saveData()
         } else {
@@ -626,7 +628,12 @@ class CS3IPlayer : IPlayer {
             stop()
             release()
         }
-        //simpleCache?.release()
+        // Keep or clear persistent playback cache according to the player's cache setting.
+        appContext?.let { cacheContext ->
+            val keepCache = PreferenceManager.getDefaultSharedPreferences(cacheContext)
+                .getBoolean(cacheContext.getString(R.string.smart_video_cache_keep_key), true)
+            if (!keepCache) clearVideoCache(cacheContext)
+        }
 
         exoPlayer = null
         event(PlayerAttachedEvent(null))
@@ -1318,18 +1325,20 @@ class CS3IPlayer : IPlayer {
         val dataSourceFactory = if (onlineSource == null) {
             null
         } else if (!cacheEnabled) {
-            CacheDataSource.Factory().setUpstreamDataSourceFactory(onlineSource)
+            onlineSource
         } else {
             if (simpleCache == null || activeSimpleCacheSize != requestedCacheBytes) {
                 try { simpleCache?.release() } catch (e: Exception) { logError(e) }
                 simpleCache = getCache(context, requestedCacheBytes)
                 activeSimpleCacheSize = if (simpleCache != null) requestedCacheBytes else -1L
             }
-            CacheDataSource.Factory().apply {
-                simpleCache?.let { setCache(it) }
-                setUpstreamDataSourceFactory(onlineSource)
-                setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-            }
+            simpleCache?.let { cache ->
+                CacheDataSource.Factory().apply {
+                    setCache(cache)
+                    setUpstreamDataSourceFactory(onlineSource)
+                    setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+                }
+            } ?: onlineSource
         }
 
         val defaultMediaSourceFactory = if (dataSourceFactory != null) {
