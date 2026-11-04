@@ -40,6 +40,8 @@ import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.CacheKeyFactory
+import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.cronet.CronetDataSource
@@ -138,6 +140,11 @@ const val toleranceBeforeUs = 300_000L
  * seek position, in microseconds. Must be non-negative.
  */
 const val toleranceAfterUs = 300_000L
+
+data class ManagedVideoCacheEntry(
+    val sourceId: String, val episodeId: String, val sourceLabel: String,
+    val episodeLabel: String, val bytes: Long
+)
 
 @OptIn(UnstableApi::class)
 class CS3IPlayer : IPlayer {
@@ -755,11 +762,52 @@ class CS3IPlayer : IPlayer {
         private var simpleCache: SimpleCache? = null
         private var activeSimpleCacheSize: Long = -1L
 
+        private fun getManagementCache(context: Context): SimpleCache? {
+            if (simpleCache != null) return simpleCache
+            return try {
+                val directory = File(context.applicationContext.filesDir, "video_cache")
+                if (!directory.exists()) directory.mkdirs()
+                simpleCache = SimpleCache(directory, NoOpCacheEvictor(), StandaloneDatabaseProvider(context.applicationContext))
+                activeSimpleCacheSize = -2L
+                simpleCache
+            } catch (e: Exception) { logError(e); null }
+        }
+
+        fun getVideoCacheEntries(context: Context): List<ManagedVideoCacheEntry> {
+            val cache = getManagementCache(context) ?: return emptyList()
+            return cache.keys.mapNotNull { key ->
+                val parts = key.split("|", limit = 4)
+                if (parts.size < 4 || parts[0] != "cs3cache-v1") return@mapNotNull null
+                val sourceId = parts[1]
+                val episodeId = parts[2]
+                val bytes = runCatching { cache.getCachedSpans(key).sumOf { it.length } }.getOrDefault(0L)
+                val labels = VideoCacheStats.cacheLabels(context, sourceId, episodeId)
+                ManagedVideoCacheEntry(sourceId, episodeId, labels.first, labels.second, bytes)
+            }.groupBy { it.sourceId to it.episodeId }.map { (_, items) ->
+                items.first().copy(bytes = items.sumOf { it.bytes })
+            }.sortedByDescending { it.bytes }
+        }
+
+        fun clearVideoCacheEpisode(context: Context, sourceId: String, episodeId: String): Int {
+            val cache = getManagementCache(context) ?: return 0
+            val keys = cache.keys.filter { it.startsWith("cs3cache-v1|$sourceId|$episodeId|") }
+            keys.forEach { cache.removeResource(it) }
+            return keys.size
+        }
+
+        fun clearVideoCacheSource(context: Context, sourceId: String): Int {
+            val cache = getManagementCache(context) ?: return 0
+            val keys = cache.keys.filter { it.startsWith("cs3cache-v1|$sourceId|") }
+            keys.forEach { cache.removeResource(it) }
+            return keys.size
+        }
+
         fun clearVideoCache(context: Context) {
             try { simpleCache?.release() } catch (e: Exception) { logError(e) }
             simpleCache = null
             activeSimpleCacheSize = -1L
             File(context.filesDir, "video_cache").deleteRecursively()
+            VideoCacheStats.clearCacheLabels(context)
         }
 
         /// Create a small factory for small things, no cache, no cronet
@@ -1327,6 +1375,16 @@ class CS3IPlayer : IPlayer {
 
         val mediaStatsUrl = mediaItemSlices.firstOrNull()
             ?.mediaItem?.localConfiguration?.uri?.toString()
+        val mediaStatsUri = Uri.parse(mediaStatsUrl ?: "")
+        val cacheSourceLabel = currentLink?.referer?.let { runCatching { Uri.parse(it).host }.getOrNull() }
+            ?: mediaStatsUri.host ?: "Unknown source"
+        val cacheEpisodeLabel = mediaItemSlices.firstOrNull()?.mediaItem?.mediaMetadata?.title
+            ?.toString()?.takeIf { it.isNotBlank() }
+            ?: mediaStatsUri.lastPathSegment?.takeIf { it.isNotBlank() }
+            ?: mediaStatsUri.host ?: "Unknown episode"
+        val cacheSourceId = VideoCacheStats.stableId(cacheSourceLabel)
+        val cacheEpisodeId = VideoCacheStats.stableId(cacheEpisodeLabel + "|" + (mediaStatsUrl ?: ""))
+        VideoCacheStats.recordCacheLabels(context.applicationContext, cacheSourceId, cacheEpisodeId, cacheSourceLabel, cacheEpisodeLabel)
         val measuredUpstreamFactory = onlineSource?.let { upstream ->
             object : DataSource.Factory {
                 override fun createDataSource(): DataSource {
@@ -1376,6 +1434,9 @@ class CS3IPlayer : IPlayer {
                 CacheDataSource.Factory().apply {
                     setCache(cache)
                     setUpstreamDataSourceFactory(measuredUpstreamFactory)
+                    setCacheKeyFactory(CacheKeyFactory { dataSpec ->
+                        VideoCacheStats.cacheKey(cacheSourceId, cacheEpisodeId, dataSpec.key ?: dataSpec.uri.toString())
+                    })
                     setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
                     setEventListener(object : CacheDataSource.EventListener {
                         override fun onCachedBytesRead(cacheSizeBytes: Long, cachedBytesRead: Long) {
