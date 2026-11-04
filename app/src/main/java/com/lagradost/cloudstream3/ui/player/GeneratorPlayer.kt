@@ -111,6 +111,7 @@ import com.lagradost.cloudstream3.utils.Coroutines.runOnMainThread
 import com.lagradost.cloudstream3.utils.DataStoreHelper
 import com.lagradost.cloudstream3.utils.DataStoreHelper.getViewPos
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.displayNameWithQuality
 import com.lagradost.cloudstream3.utils.ExtractorLinkType
 import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showDialog
@@ -1633,7 +1634,7 @@ class GeneratorPlayer : FullScreenPlayer() {
             isSourceSelectionShowing = true
             val labels = availableLinks.map { display ->
                 val link = display.link!!
-                "${link.name} • ${Qualities.getStringByInt(link.quality)} • ${link.source}"
+                link.displayNameWithQuality()
             }
             AlertDialog.Builder(ctx)
                 .setTitle("Choose server and quality")

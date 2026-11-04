@@ -124,6 +124,7 @@ import com.lagradost.cloudstream3.utils.DataStoreHelper.setVideoWatchState
 import com.lagradost.cloudstream3.utils.DataStoreHelper.updateSubscribedData
 import com.lagradost.cloudstream3.utils.Editor
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.displayNameWithQuality
 import com.lagradost.cloudstream3.utils.ExtractorLinkType
 import com.lagradost.cloudstream3.utils.FillerEpisodeCheck
 import com.lagradost.cloudstream3.utils.INFER_TYPE
@@ -1258,7 +1259,7 @@ class ResultViewModel2 : ViewModel() {
             //val context = CloudStreamApp.context
             postPopup(
                 text,
-                links.links.map { txt("${it.name} ${Qualities.getStringByInt(it.quality)}") }
+                links.links.map { txt(it.displayNameWithQuality()) }
                 /*.amap {
                 val size =
                     it.getVideoSize()?.let { size -> " " + formatFileSize(context, size) } ?: ""
