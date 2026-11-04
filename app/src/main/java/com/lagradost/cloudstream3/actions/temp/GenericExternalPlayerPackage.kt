@@ -11,7 +11,7 @@ import com.lagradost.cloudstream3.utils.ExtractorLinkType
 import com.lagradost.cloudstream3.utils.txt
 
 /**
- * Generic integration for any installed app that advertises ACTION_VIEW for video/*.
+ * Generic integration for any installed app that advertises ACTION_VIEW for video MIME types.
  * The package name is persisted as the action's sourcePlugin component, making each
  * discovered app independently selectable as the preferred external player.
  */
