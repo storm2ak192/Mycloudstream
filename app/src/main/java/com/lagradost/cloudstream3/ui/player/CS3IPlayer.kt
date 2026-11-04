@@ -743,6 +743,14 @@ class CS3IPlayer : IPlayer {
             }
 
         private var simpleCache: SimpleCache? = null
+        private var activeSimpleCacheSize: Long = -1L
+
+        fun clearVideoCache(context: Context) {
+            try { simpleCache?.release() } catch (e: Exception) { logError(e) }
+            simpleCache = null
+            activeSimpleCacheSize = -1L
+            File(context.filesDir, "video_cache").deleteRecursively()
+        }
 
         /// Create a small factory for small things, no cache, no cronet
         private fun createOnlineSource(
@@ -851,10 +859,10 @@ class CS3IPlayer : IPlayer {
         private fun getCache(context: Context, cacheSize: Long): SimpleCache? {
             return try {
                 val databaseProvider = StandaloneDatabaseProvider(context)
+                val cacheDirectory = File(context.filesDir, "video_cache")
+                if (!cacheDirectory.exists()) cacheDirectory.mkdirs()
                 SimpleCache(
-                    File(
-                        context.cacheDir, "exoplayer"
-                    ).also { deleteFileOnExit(it) }, // Ensures always fresh file
+                    cacheDirectory,
                     LeastRecentlyUsedCacheEvictor(cacheSize),
                     databaseProvider
                 )
@@ -1289,18 +1297,39 @@ class CS3IPlayer : IPlayer {
         val extractorFactor = UpdatedDefaultExtractorsFactory()
             .setFragmentedMp4ExtractorFlags(FragmentedMp4Extractor.FLAG_MERGE_FRAGMENTED_SIDX)
 
-        // Create an online connection with cache for all online sources
+        // Cache only requested playback bytes. No full-file prefetch is performed.
+        val cachePreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val cacheEnabled = cachePreferences.getBoolean(
+            context.getString(R.string.smart_video_cache_enabled_key), true
+        )
+        val configuredCacheMb = cachePreferences.getInt(
+            context.getString(R.string.video_buffer_disk_key), 250
+        )
+        val customCacheMb = cachePreferences.getInt(
+            context.getString(R.string.smart_video_cache_custom_size_key), 250
+        )
+        val effectiveCacheMb = when (configuredCacheMb) {
+            0 -> 250
+            -1 -> customCacheMb
+            else -> configuredCacheMb
+        }.coerceIn(100, 1024)
+        val requestedCacheBytes = effectiveCacheMb.toLong() * 1024L * 1024L
+
         val dataSourceFactory = if (onlineSource == null) {
             null
+        } else if (!cacheEnabled) {
+            CacheDataSource.Factory().setUpstreamDataSourceFactory(onlineSource)
         } else {
-            if (simpleCache == null)
-                simpleCache = getCache(context, simpleCacheSize)
-
-            val cacheFactory = CacheDataSource.Factory().apply {
+            if (simpleCache == null || activeSimpleCacheSize != requestedCacheBytes) {
+                try { simpleCache?.release() } catch (e: Exception) { logError(e) }
+                simpleCache = getCache(context, requestedCacheBytes)
+                activeSimpleCacheSize = if (simpleCache != null) requestedCacheBytes else -1L
+            }
+            CacheDataSource.Factory().apply {
                 simpleCache?.let { setCache(it) }
                 setUpstreamDataSourceFactory(onlineSource)
+                setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             }
-            cacheFactory
         }
 
         val defaultMediaSourceFactory = if (dataSourceFactory != null) {
