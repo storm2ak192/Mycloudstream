@@ -269,7 +269,7 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
 
                     val notificationPreferences = PreferenceManager.getDefaultSharedPreferences(context)
                     val sourceNotificationsEnabled = notificationPreferences.getBoolean(
-                        sourceNotificationPreferenceKey(api.name, "enabled"), true
+                        sourceNotificationPreferenceKey(api.name, "enabled"), false
                     )
                     val episodeNotificationsEnabled = notificationPreferences.getBoolean(
                         sourceNotificationPreferenceKey(api.name, "episodes"), true
