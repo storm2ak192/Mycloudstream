@@ -835,4 +835,6 @@
     <string name="smart_video_cache_stats_title">Internet usage statistics</string>
     <string name="smart_video_cache_stats_summary">View measured playback data from the internet and data reused from cache.</string>
     <string name="smart_video_cache_stats_reset">Reset playback statistics</string>
+    <string name="source_notifications_enabled">Enable notifications — %1$s</string>
+    <string name="source_notifications_enabled_summary">Master switch for this source’s episode and movie notifications.</string>
 </resources>
