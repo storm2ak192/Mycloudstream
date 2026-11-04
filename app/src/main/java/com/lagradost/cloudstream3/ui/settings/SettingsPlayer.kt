@@ -1,6 +1,9 @@
 package com.lagradost.cloudstream3.ui.settings
 
 import android.os.Bundle
+import android.text.InputType
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import android.text.format.Formatter.formatShortFileSize
 import android.view.View
 import androidx.core.content.edit
@@ -275,9 +278,30 @@ class SettingsPlayer : BasePreferenceFragmentCompat() {
                 getString(R.string.video_buffer_disk_settings),
                 true,
                 {}
-            ) {
-                settingsManager.edit {
-                    putInt(getString(R.string.video_buffer_disk_key), prefValues[it])
+            ) { selectedIndex ->
+                val selectedValue = prefValues[selectedIndex]
+                if (selectedValue == -1) {
+                    val input = EditText(requireContext()).apply {
+                        inputType = InputType.TYPE_CLASS_NUMBER
+                        setText(settingsManager.getInt(getString(R.string.smart_video_cache_custom_size_key), 250).toString())
+                        selectAll()
+                    }
+                    AlertDialog.Builder(requireContext())
+                        .setTitle(R.string.smart_video_cache_custom_title)
+                        .setMessage(R.string.smart_video_cache_custom_message)
+                        .setView(input)
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            val size = input.text.toString().toIntOrNull()?.coerceIn(100, 1024) ?: 250
+                            settingsManager.edit {
+                                putInt(getString(R.string.smart_video_cache_custom_size_key), size)
+                                putInt(getString(R.string.video_buffer_disk_key), -1)
+                            }
+                        }.show()
+                } else {
+                    settingsManager.edit {
+                        putInt(getString(R.string.video_buffer_disk_key), selectedValue)
+                    }
                 }
             }
             return@setOnPreferenceClickListener true
@@ -304,7 +328,7 @@ class SettingsPlayer : BasePreferenceFragmentCompat() {
         }
 
         getPref(R.string.video_buffer_clear_key)?.let { pref ->
-            val cacheDir = context?.cacheDir ?: return@let
+            val cacheDir = context?.let { java.io.File(it.filesDir, "video_cache") } ?: return@let
 
             fun updateSummary() {
                 try {
@@ -318,7 +342,7 @@ class SettingsPlayer : BasePreferenceFragmentCompat() {
 
             pref.setOnPreferenceClickListener {
                 try {
-                    cacheDir.deleteRecursively()
+                    com.lagradost.cloudstream3.ui.player.CS3IPlayer.clearVideoCache(requireContext())
                     updateSummary()
                 } catch (e: Exception) {
                     logError(e)
