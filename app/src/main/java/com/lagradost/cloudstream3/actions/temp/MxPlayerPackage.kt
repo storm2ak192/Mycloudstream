@@ -39,6 +39,11 @@ open class MxPlayerPackage(
 
         intent.action = Intent.ACTION_VIEW
         intent.setDataAndType(selected.url.toUri(), "video/*")
+        // Supply a human-readable title instead of allowing MX Player to derive one
+        // from an opaque CDN URL or a temporary token.
+        intent.putExtra(Intent.EXTRA_TITLE, video.name)
+        intent.putExtra("title", video.name)
+        intent.putExtra("name", video.name)
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 

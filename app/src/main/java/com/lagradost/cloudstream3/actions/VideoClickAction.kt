@@ -104,7 +104,29 @@ object VideoClickActionHolder {
             ?.second
     }
 
-    fun getPlayers(context: Context? = null) = allVideoClickActions.filter { it.isPlayer && it.shouldShowSafe(context, null) }
+    fun getPlayers(context: Context? = null): List<VideoClickAction> {
+        if (context != null) {
+            try {
+                val query = Intent(Intent.ACTION_VIEW).setType("video/*")
+                @Suppress("DEPRECATION")
+                val installed = context.packageManager.queryIntentActivities(query, 0)
+                installed.forEach { resolved ->
+                    val packageName = resolved.activityInfo?.packageName ?: return@forEach
+                    if (packageName == context.packageName) return@forEach
+                    if (allVideoClickActions.none {
+                            it is GenericExternalPlayerPackage && it.packageName == packageName
+                        }) {
+                        val label = resolved.loadLabel(context.packageManager)?.toString()
+                            ?.takeIf { it.isNotBlank() } ?: packageName
+                        allVideoClickActions.add(GenericExternalPlayerPackage(packageName, label))
+                    }
+                }
+            } catch (t: Throwable) {
+                logError(t)
+            }
+        }
+        return allVideoClickActions.filter { it.isPlayer && it.shouldShowSafe(context, null) }
+    }
 }
 
 abstract class VideoClickAction {
