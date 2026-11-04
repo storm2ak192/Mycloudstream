@@ -212,7 +212,7 @@
             android:title="@string/video_buffer_length_settings" />
 
         <Preference
-            android:icon="@drawable/ic_baseline_data_usage_24"
+            android:icon="@drawable/ic_baseline_storage_24"
             android:key="@string/smart_video_cache_stats_key"
             android:title="@string/smart_video_cache_stats_title"
             android:summary="@string/smart_video_cache_stats_summary" />
