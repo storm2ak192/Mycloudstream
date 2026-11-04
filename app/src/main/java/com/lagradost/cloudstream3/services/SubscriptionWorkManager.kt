@@ -124,6 +124,7 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
             PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(context)
             PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllLocalPlugins(context, false)
 
+            val subscriptions = getAllSubscriptions()
             val sourcePreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val seenItems = context.getSharedPreferences("source_notification_seen", Context.MODE_PRIVATE)
             val providers = APIHolder.apis.withLock { APIHolder.apis.toList() }
@@ -140,15 +141,17 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                     )
                     val baselineKey = "baseline_$suffix"
                     val hasBaseline = seenItems.getBoolean(baselineKey, false)
+                    var receivedAnyPage = false
 
-                    api.mainPage.take(3).forEach { pageRequest ->
+                    api.mainPage.take(3).forEach pageRequestLoop@ { pageRequest ->
                         try {
                             val page = withTimeoutOrNull(25_000) {
                                 api.getMainPage(
                                     1,
                                     MainPageRequest(pageRequest.name, pageRequest.data, pageRequest.horizontalImages)
                                 )
-                            } ?: return@forEach
+                            } ?: return@pageRequestLoop
+                            receivedAnyPage = true
 
                             page.items.flatMap { it.list }.forEach { item ->
                                 val itemKey = "item_${suffix}_${item.url.hashCode()}"
@@ -160,13 +163,16 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                                 }
                                 val isMovie = item is MovieSearchResponse || item.type?.isMovieType() == true
 
+                                val isSubscribedSeries = !isMovie && subscriptions.any {
+                                    it.apiName == api.name && it.url == item.url
+                                }
                                 val notificationText = when {
                                     isMovie && moviesEnabled && hasBaseline && previousCount == null ->
                                         "New movie available from ${api.name}"
-                                    !isMovie && episodesEnabled && episodeCount != null &&
+                                    !isMovie && !isSubscribedSeries && episodesEnabled && episodeCount != null &&
                                         hasBaseline && previousCount != null && episodeCount > previousCount ->
                                         "New episodes: $previousCount → $episodeCount"
-                                    !isMovie && episodesEnabled && episodeCount != null &&
+                                    !isMovie && !isSubscribedSeries && episodesEnabled && episodeCount != null &&
                                         hasBaseline && previousCount == null ->
                                         "New series or episodes available from ${api.name}"
                                     else -> null
@@ -194,13 +200,12 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                             logError(t)
                         }
                     }
-                    seenItems.edit().putBoolean(baselineKey, true).apply()
+                    if (receivedAnyPage) seenItems.edit().putBoolean(baselineKey, true).apply()
                 } catch (t: Throwable) {
                     logError(t)
                 }
             }
 
-            val subscriptions = getAllSubscriptions()
             if (subscriptions.isEmpty()) return Result.success()
 
             val max = subscriptions.size
