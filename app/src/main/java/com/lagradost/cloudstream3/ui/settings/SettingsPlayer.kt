@@ -8,6 +8,7 @@ import android.text.format.Formatter.formatShortFileSize
 import android.view.View
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
+import androidx.navigation.fragment.findNavController
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.actions.VideoClickActionHolder
 import com.lagradost.cloudstream3.mvvm.logError
@@ -329,19 +330,7 @@ class SettingsPlayer : BasePreferenceFragmentCompat() {
         }
 
         getPref(R.string.smart_video_cache_stats_key)?.setOnPreferenceClickListener {
-            val ctx = requireContext()
-            val cacheDirectory = java.io.File(ctx.filesDir, "video_cache")
-            val cacheBytes = getFolderSize(cacheDirectory)
-            val message = VideoCacheStats.getSummary(ctx) +
-                "\n\nCached files currently stored: ${formatShortFileSize(ctx, cacheBytes)}"
-            AlertDialog.Builder(ctx)
-                .setTitle(R.string.smart_video_cache_stats_title)
-                .setMessage(message)
-                .setPositiveButton(android.R.string.ok, null)
-                .setNeutralButton(R.string.smart_video_cache_stats_reset) { _, _ ->
-                    VideoCacheStats.clear(ctx)
-                }
-                .show()
+            findNavController().navigate(R.id.navigation_video_cache_stats)
             true
         }
 
