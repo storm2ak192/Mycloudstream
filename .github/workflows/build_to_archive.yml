@@ -1,12 +1,6 @@
 name: Archive build
 
 on:
-  push:
-    branches: [ master ]
-    paths-ignore:
-      - '*.md'
-      - '*.json'
-      - '**/wcokey.txt'
   workflow_dispatch:
 
 permissions:

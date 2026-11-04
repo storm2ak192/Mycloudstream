@@ -1,10 +1,6 @@
 name: Fix locale issues
 
 on:
-  push:
-    branches: [ master ]
-    paths:
-      - '**.xml'
   workflow_dispatch:
 
 concurrency:
