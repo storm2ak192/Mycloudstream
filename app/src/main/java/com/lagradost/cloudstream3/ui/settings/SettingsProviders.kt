@@ -152,6 +152,14 @@ class SettingsProviders : BasePreferenceFragmentCompat() {
         notificationProviders.sortedBy { it.name.lowercase() }.forEach { provider ->
             notificationCategory.addPreference(
                 SwitchPreferenceCompat(requireContext()).apply {
+                    key = sourceNotificationPreferenceKey(provider.name, "enabled")
+                    title = getString(R.string.source_notifications_enabled, provider.name)
+                    summary = getString(R.string.source_notifications_enabled_summary)
+                    setDefaultValue(true)
+                }
+            )
+            notificationCategory.addPreference(
+                SwitchPreferenceCompat(requireContext()).apply {
                     key = sourceNotificationPreferenceKey(provider.name, "episodes")
                     title = getString(R.string.source_notifications_episodes, provider.name)
                     summary = getString(R.string.source_notifications_episodes_summary)
