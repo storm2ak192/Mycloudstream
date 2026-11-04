@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <ListPreference
+        android:key="@string/source_notification_scan_interval_key"
+        android:title="@string/source_notification_scan_interval_title"
+        android:summary="@string/source_notification_scan_interval_summary"
+        android:defaultValue="60"
+        android:entries="@array/source_notification_scan_intervals"
+        android:entryValues="@array/source_notification_scan_interval_values" />
+
     <Preference
         android:icon="@drawable/ic_baseline_language_24"
         android:key="@string/provider_lang_key"
