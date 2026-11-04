@@ -840,6 +840,7 @@
     <string name="smart_video_cache_stats_reset">Reset playback statistics</string>
     <string name="source_notifications_enabled">Enable notifications — %1$s</string>
     <string name="source_notifications_enabled_summary">Master switch for this source’s episode and movie notifications.</string>
+    <string name="source_notifications_empty_summary">Install and enable a source extension to configure its notifications here.</string>
     <string name="video_cache_manage_episodes">Cached episodes and videos</string>
     <string name="video_cache_manage_sources">Cached sources</string>
     <string name="video_cache_no_entries">No cache entries tracked yet. New playback cache entries will appear here.</string>
