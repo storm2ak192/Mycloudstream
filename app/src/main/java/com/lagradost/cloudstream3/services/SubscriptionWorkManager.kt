@@ -133,6 +133,10 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                 try {
                     if (!api.hasMainPage) return@forEach
                     val suffix = api.name.hashCode()
+                    val sourceEnabled = sourcePreferences.getBoolean(
+                        sourceNotificationPreferenceKey(api.name, "enabled"), true
+                    )
+                    if (!sourceEnabled) return@forEach
                     val episodesEnabled = sourcePreferences.getBoolean(
                         sourceNotificationPreferenceKey(api.name, "episodes"), true
                     )
@@ -253,11 +257,15 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                         response
                     )
 
-                    val episodeNotificationsEnabled = PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .getBoolean(sourceNotificationPreferenceKey(api.name, "episodes"), true)
+                    val notificationPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+                    val sourceNotificationsEnabled = notificationPreferences.getBoolean(
+                        sourceNotificationPreferenceKey(api.name, "enabled"), true
+                    )
+                    val episodeNotificationsEnabled = notificationPreferences.getBoolean(
+                        sourceNotificationPreferenceKey(api.name, "episodes"), true
+                    )
 
-                    if (shouldUpdate && episodeNotificationsEnabled) {
+                    if (shouldUpdate && sourceNotificationsEnabled && episodeNotificationsEnabled) {
                         val updateHeader = savedData.name
                         val updateDescription = txt(
                             R.string.subscription_episode_released,
