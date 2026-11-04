@@ -817,4 +817,13 @@
     <string name="player_brightness_gesture_enabled_key">player_brightness_gesture_enabled</string>
     <string name="player_brightness_gesture_title">Brightness gesture</string>
     <string name="player_brightness_gesture_summary">Use the left side for brightness. When disabled, swipe either side to change volume.</string>
+    <string name="smart_video_cache_enabled_key">smart_video_cache_enabled</string>
+    <string name="smart_video_cache_keep_key">smart_video_cache_keep</string>
+    <string name="smart_video_cache_custom_size_key">smart_video_cache_custom_size_mb</string>
+    <string name="smart_video_cache_enabled_title">Smart video cache</string>
+    <string name="smart_video_cache_enabled_summary">Reuse downloaded video segments when seeking or replaying. Playback data is cached on demand only.</string>
+    <string name="smart_video_cache_keep_title">Keep cache after closing player</string>
+    <string name="smart_video_cache_keep_summary">Keep cached video segments for later playback and seeking.</string>
+    <string name="smart_video_cache_custom_title">Custom cache size</string>
+    <string name="smart_video_cache_custom_message">Enter cache size in MB (100–1024).</string>
 </resources>
