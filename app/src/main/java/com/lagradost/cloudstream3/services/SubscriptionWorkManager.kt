@@ -143,6 +143,7 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                     val moviesEnabled = sourcePreferences.getBoolean(
                         sourceNotificationPreferenceKey(api.name, "movies"), true
                     )
+                    if (!episodesEnabled && !moviesEnabled) return@forEach
                     val baselineKey = "baseline_$suffix"
                     val hasBaseline = seenItems.getBoolean(baselineKey, false)
                     var receivedAnyPage = false
