@@ -92,7 +92,7 @@ class MediaLibraryFragment : Fragment() {
 
         search = EditText(requireContext()).apply {
             hint = "Search videos or folders"
-            singleLine = true
+            setSingleLine(true)
             setTextColor(android.graphics.Color.WHITE)
             setHintTextColor(0xFFAAAAAA.toInt())
         }
