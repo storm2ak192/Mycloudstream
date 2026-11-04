@@ -114,7 +114,7 @@ object VideoClickActionHolder {
                     val packageName = resolved.activityInfo?.packageName ?: return@forEach
                     if (packageName == context.packageName) return@forEach
                     if (allVideoClickActions.none {
-                            it is GenericExternalPlayerPackage && it.packageName == packageName
+                            it is OpenInAppAction && it.packageName == packageName
                         }) {
                         val label = resolved.loadLabel(context.packageManager)?.toString()
                             ?.takeIf { it.isNotBlank() } ?: packageName
