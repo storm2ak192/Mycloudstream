@@ -184,6 +184,7 @@ class SettingsProviders : BasePreferenceFragmentCompat() {
         }
 
         val notificationProviders = APIHolder.apis.withLock { APIHolder.apis.toList() }
+            .filter { it.hasMainPage }
             .distinctBy { it.name }
             .sortedBy { it.name.lowercase() }
 
