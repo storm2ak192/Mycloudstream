@@ -35,6 +35,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.cache.CacheDataSource
@@ -102,6 +104,7 @@ import com.lagradost.cloudstream3.utils.CLEARKEY_DRM_UUID
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.runOnMainThread
 import com.lagradost.cloudstream3.utils.DataStoreHelper.currentAccount
+import com.lagradost.cloudstream3.utils.VideoCacheStats
 import com.lagradost.cloudstream3.utils.DrmExtractorLink
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.ExtractorLinkPlayList
@@ -1322,10 +1325,47 @@ class CS3IPlayer : IPlayer {
         }.coerceIn(100, 1024)
         val requestedCacheBytes = effectiveCacheMb.toLong() * 1024L * 1024L
 
-        val dataSourceFactory = if (onlineSource == null) {
+        val mediaStatsUrl = mediaItemSlices.firstOrNull()
+            ?.mediaItem?.localConfiguration?.uri?.toString()
+        val measuredUpstreamFactory = onlineSource?.let { upstream ->
+            object : DataSource.Factory {
+                override fun createDataSource(): DataSource {
+                    val source = upstream.createDataSource()
+                    source.addTransferListener(object : TransferListener {
+                        private var transferredBytes = 0L
+
+                        override fun onTransferInitializing(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) = Unit
+                        override fun onTransferStart(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
+                            transferredBytes = 0L
+                        }
+                        override fun onBytesTransferred(
+                            source: DataSource,
+                            dataSpec: DataSpec,
+                            isNetwork: Boolean,
+                            bytesTransferred: Int
+                        ) {
+                            if (isNetwork) transferredBytes += bytesTransferred.toLong()
+                        }
+                        override fun onTransferEnd(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
+                            if (isNetwork && transferredBytes > 0L) {
+                                VideoCacheStats.recordNetworkBytes(
+                                    context.applicationContext,
+                                    transferredBytes,
+                                    mediaStatsUrl
+                                )
+                            }
+                            transferredBytes = 0L
+                        }
+                    })
+                    return source
+                }
+            }
+        }
+
+        val dataSourceFactory = if (measuredUpstreamFactory == null) {
             null
         } else if (!cacheEnabled) {
-            onlineSource
+            measuredUpstreamFactory
         } else {
             if (simpleCache == null || activeSimpleCacheSize != requestedCacheBytes) {
                 try { simpleCache?.release() } catch (e: Exception) { logError(e) }
@@ -1335,10 +1375,16 @@ class CS3IPlayer : IPlayer {
             simpleCache?.let { cache ->
                 CacheDataSource.Factory().apply {
                     setCache(cache)
-                    setUpstreamDataSourceFactory(onlineSource)
+                    setUpstreamDataSourceFactory(measuredUpstreamFactory)
                     setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+                    setEventListener(object : CacheDataSource.EventListener {
+                        override fun onCachedBytesRead(cacheSizeBytes: Long, cachedBytesRead: Long) {
+                            VideoCacheStats.recordCachedBytes(context.applicationContext, cachedBytesRead)
+                        }
+                        override fun onCacheIgnored(reason: Int) = Unit
+                    })
                 }
-            } ?: onlineSource
+            } ?: measuredUpstreamFactory
         }
 
         val defaultMediaSourceFactory = if (dataSourceFactory != null) {
