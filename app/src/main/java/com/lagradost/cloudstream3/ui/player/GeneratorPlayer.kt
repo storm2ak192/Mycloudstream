@@ -1632,7 +1632,7 @@ class GeneratorPlayer : FullScreenPlayer() {
             val ctx = activity ?: return
             isSourceSelectionShowing = true
             val labels = availableLinks.map { display ->
-                val link = display.link!!
+                val link = display.link.first!!
                 link.displayNameWithQuality()
             }
             AlertDialog.Builder(ctx)
