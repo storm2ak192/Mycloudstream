@@ -182,6 +182,16 @@
             app:showSeekBarValue="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/pref_category_player_layout">
+        <Preference
+            android:key="player_clock_battery_overlay_settings"
+            android:title="@string/player_clock_battery_overlay_title"
+            android:summary="@string/player_overlay_settings_summary" />
+        <Preference
+            android:key="player_time_overlay_settings"
+            android:title="@string/player_time_overlay_title"
+            android:summary="@string/player_overlay_settings_summary" />
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_category_cache">
         <SwitchPreference
             android:title="@string/smart_video_cache_enabled_title"

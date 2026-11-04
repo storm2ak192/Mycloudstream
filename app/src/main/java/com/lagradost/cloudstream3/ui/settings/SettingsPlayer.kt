@@ -334,6 +334,19 @@ class SettingsPlayer : BasePreferenceFragmentCompat() {
             true
         }
 
+        findPreference<androidx.preference.Preference>("player_clock_battery_overlay_settings")?.setOnPreferenceClickListener {
+            com.lagradost.cloudstream3.ui.player.PlayerOverlaySettings.show(
+                requireContext(), "player_clock_battery", getString(R.string.player_clock_battery_overlay_title), true
+            )
+            true
+        }
+        findPreference<androidx.preference.Preference>("player_time_overlay_settings")?.setOnPreferenceClickListener {
+            com.lagradost.cloudstream3.ui.player.PlayerOverlaySettings.show(
+                requireContext(), "player_elapsed_remaining", getString(R.string.player_time_overlay_title), false
+            )
+            true
+        }
+
         getPref(R.string.video_buffer_clear_key)?.let { pref ->
             val cacheDir = context?.let { java.io.File(it.filesDir, "video_cache") } ?: return@let
 

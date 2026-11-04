@@ -1101,6 +1101,34 @@
 
     </FrameLayout>
     <TextView
+        android:id="@+id/player_clock_battery_overlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="14dp"
+        android:background="#99000000"
+        android:padding="7dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="14:35 • 82%" />
+
+    <TextView
+        android:id="@+id/player_elapsed_remaining_overlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="14dp"
+        android:background="#99000000"
+        android:padding="7dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="12:34 • -45:20" />
+
+    <TextView
         android:id="@+id/player_speed_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
