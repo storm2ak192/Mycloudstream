@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string-array name="source_notification_scan_intervals">
+        <item>Every 15 minutes</item>
         <item>Every 30 minutes</item>
         <item>Every hour</item>
         <item>Every 2 hours</item>
     </string-array>
     <string-array name="source_notification_scan_interval_values">
+        <item>15</item>
         <item>30</item>
         <item>60</item>
         <item>120</item>

@@ -49,7 +49,7 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                 "60"
             )?.toLongOrNull() ?: 60L
             val intervalMinutes = (requestedIntervalMinutes ?: configuredInterval)
-                .coerceIn(30L, 120L)
+                .coerceIn(15L, 120L)
 
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)

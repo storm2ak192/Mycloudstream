@@ -6,6 +6,7 @@ import androidx.core.content.edit
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.NavOptions
 import androidx.preference.PreferenceManager
+import androidx.preference.Preference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceCategory
 import androidx.preference.SwitchPreferenceCompat
@@ -148,23 +149,52 @@ class SettingsProviders : BasePreferenceFragmentCompat() {
 
         findPreference<ListPreference>(getString(R.string.source_notification_scan_interval_key))
             ?.setOnPreferenceChangeListener { _, newValue ->
-                val minutes = newValue.toString().toLongOrNull()?.coerceIn(30L, 120L) ?: 60L
+                val minutes = newValue.toString().toLongOrNull()?.coerceIn(15L, 120L) ?: 60L
                 SubscriptionWorkManager.enqueuePeriodicWork(requireContext(), minutes)
                 true
             }
 
+        refreshSourceNotificationPreferences()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Rebuild this list whenever the screen is opened again so extensions
+        // installed after the first visit are immediately selectable.
+        refreshSourceNotificationPreferences()
+    }
+
+    private fun refreshSourceNotificationPreferences() {
+        val screen = preferenceScreen ?: return
+        screen.findPreference<PreferenceCategory>("source_notifications_dynamic_category")?.let {
+            screen.removePreference(it)
+        }
         val notificationCategory = PreferenceCategory(requireContext()).apply {
+            key = "source_notifications_dynamic_category"
             title = getString(R.string.source_notifications_category)
         }
-        preferenceScreen?.addPreference(notificationCategory)
+        screen.addPreference(notificationCategory)
+
         val notificationProviders = APIHolder.apis.withLock { APIHolder.apis.toList() }
-        notificationProviders.sortedBy { it.name.lowercase() }.forEach { provider ->
+            .distinctBy { it.name }
+            .sortedBy { it.name.lowercase() }
+
+        if (notificationProviders.isEmpty()) {
+            notificationCategory.addPreference(Preference(requireContext()).apply {
+                title = getString(R.string.no_data)
+                summary = getString(R.string.source_notifications_empty_summary)
+                isSelectable = false
+            })
+            return
+        }
+
+        notificationProviders.forEach { provider ->
             notificationCategory.addPreference(
                 SwitchPreferenceCompat(requireContext()).apply {
                     key = sourceNotificationPreferenceKey(provider.name, "enabled")
                     title = getString(R.string.source_notifications_enabled, provider.name)
                     summary = getString(R.string.source_notifications_enabled_summary)
-                    setDefaultValue(true)
+                    setDefaultValue(false)
                 }
             )
             notificationCategory.addPreference(
