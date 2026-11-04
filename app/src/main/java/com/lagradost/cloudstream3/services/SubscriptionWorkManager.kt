@@ -40,22 +40,30 @@ fun sourceNotificationPreferenceKey(providerName: String, contentType: String): 
 class SubscriptionWorkManager(val context: Context, workerParams: WorkerParameters) :
     CoroutineWorker(context, workerParams) {
     companion object {
-        fun enqueuePeriodicWork(context: Context?) {
+        fun enqueuePeriodicWork(context: Context?, requestedIntervalMinutes: Long? = null) {
             if (context == null) return
+
+            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val configuredInterval = preferences.getString(
+                context.getString(R.string.source_notification_scan_interval_key),
+                "60"
+            )?.toLongOrNull() ?: 60L
+            val intervalMinutes = (requestedIntervalMinutes ?: configuredInterval)
+                .coerceIn(30L, 120L)
 
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
 
             val periodicSyncDataWork =
-                PeriodicWorkRequest.Builder(SubscriptionWorkManager::class.java, 6, TimeUnit.HOURS)
+                PeriodicWorkRequest.Builder(SubscriptionWorkManager::class.java, intervalMinutes, TimeUnit.MINUTES)
                     .addTag(SUBSCRIPTION_WORK_NAME)
                     .setConstraints(constraints)
                     .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 SUBSCRIPTION_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.REPLACE,
                 periodicSyncDataWork
             )
 
@@ -148,7 +156,8 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                     val hasBaseline = seenItems.getBoolean(baselineKey, false)
                     var receivedAnyPage = false
 
-                    api.mainPage.take(3).forEach pageRequestLoop@ { pageRequest ->
+                    // Inspect every configured homepage section, not only the first few.
+                    api.mainPage.forEach pageRequestLoop@ { pageRequest ->
                         try {
                             val page = withTimeoutOrNull(25_000) {
                                 api.getMainPage(
