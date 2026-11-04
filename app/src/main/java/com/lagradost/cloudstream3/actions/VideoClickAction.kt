@@ -16,6 +16,7 @@ import com.lagradost.cloudstream3.actions.temp.BiglyBTPackage
 import com.lagradost.cloudstream3.actions.temp.CopyClipboardAction
 import com.lagradost.cloudstream3.actions.temp.DownloadWith1DMAction
 import com.lagradost.cloudstream3.actions.temp.JustPlayerPackage
+import com.lagradost.cloudstream3.actions.temp.GenericExternalPlayerPackage
 import com.lagradost.cloudstream3.actions.temp.LibreTorrentPackage
 import com.lagradost.cloudstream3.actions.temp.MpvExPackage
 import com.lagradost.cloudstream3.actions.temp.MpvKtPackage
