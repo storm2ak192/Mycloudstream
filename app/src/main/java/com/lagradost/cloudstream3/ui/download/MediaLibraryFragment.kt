@@ -37,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
+import java.io.File
 
 private data class LibraryVideo(
     val uri: Uri,
@@ -200,6 +201,7 @@ class MediaLibraryFragment : Fragment() {
             MediaStore.Video.Media.DATE_ADDED
         )
         if (Build.VERSION.SDK_INT >= 29) projection.add(MediaStore.Video.Media.RELATIVE_PATH)
+        else projection.add(MediaStore.Video.Media.DATA)
         val sort = "${MediaStore.Video.Media.DATE_ADDED} DESC"
         val collection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
         var cursor: Cursor? = null
@@ -212,11 +214,16 @@ class MediaLibraryFragment : Fragment() {
                 val sizeCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
                 val dateCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
                 val pathCol = if (Build.VERSION.SDK_INT >= 29) c.getColumnIndex(MediaStore.Video.Media.RELATIVE_PATH) else -1
+                val dataCol = if (Build.VERSION.SDK_INT < 29) c.getColumnIndex(MediaStore.Video.Media.DATA) else -1
                 while (c.moveToNext()) {
                     val id = c.getLong(idCol)
                     val uri = Uri.withAppendedPath(collection, id.toString())
-                    val rawPath = if (pathCol >= 0) c.getString(pathCol).orEmpty() else ""
-                    val folder = rawPath.trimEnd('/').substringAfterLast('/', "Videos")
+                    val rawPath = when {
+                        pathCol >= 0 -> c.getString(pathCol).orEmpty()
+                        dataCol >= 0 -> File(c.getString(dataCol).orEmpty()).parent.orEmpty()
+                        else -> ""
+                    }
+                    val folder = rawPath.trimEnd('/').ifBlank { "Videos" }
                     output.add(
                         LibraryVideo(
                             uri = uri,
