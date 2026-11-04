@@ -183,6 +183,16 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/pref_category_cache">
+        <SwitchPreference
+            android:title="@string/smart_video_cache_enabled_title"
+            android:summary="@string/smart_video_cache_enabled_summary"
+            app:defaultValue="true"
+            app:key="@string/smart_video_cache_enabled_key" />
+        <SwitchPreference
+            android:title="@string/smart_video_cache_keep_title"
+            android:summary="@string/smart_video_cache_keep_summary"
+            app:defaultValue="true"
+            app:key="@string/smart_video_cache_keep_key" />
         <Preference
             android:icon="@drawable/ic_baseline_storage_24"
             android:key="@string/video_buffer_disk_key"
