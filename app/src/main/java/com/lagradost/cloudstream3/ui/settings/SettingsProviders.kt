@@ -165,15 +165,12 @@ class SettingsProviders : BasePreferenceFragmentCompat() {
     }
 
     private fun refreshSourceNotificationPreferences() {
-        val screen = preferenceScreen ?: return
-        screen.findPreference<PreferenceCategory>("source_notifications_dynamic_category")?.let {
-            screen.removePreference(it)
+        val notificationCategory = findPreference<PreferenceCategory>("source_notifications_settings_category")
+            ?: return
+        // Keep the interval selector in this category and rebuild only the dynamic source controls.
+        while (notificationCategory.preferenceCount > 1) {
+            notificationCategory.removePreference(notificationCategory.getPreference(1))
         }
-        val notificationCategory = PreferenceCategory(requireContext()).apply {
-            key = "source_notifications_dynamic_category"
-            title = getString(R.string.source_notifications_category)
-        }
-        screen.addPreference(notificationCategory)
 
         val notificationProviders = APIHolder.apis.withLock { APIHolder.apis.toList() }
             .distinctBy { it.name }

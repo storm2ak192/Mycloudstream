@@ -142,7 +142,7 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                     if (!api.hasMainPage) return@forEach
                     val suffix = api.name.hashCode()
                     val sourceEnabled = sourcePreferences.getBoolean(
-                        sourceNotificationPreferenceKey(api.name, "enabled"), true
+                        sourceNotificationPreferenceKey(api.name, "enabled"), false
                     )
                     if (!sourceEnabled) return@forEach
                     val episodesEnabled = sourcePreferences.getBoolean(

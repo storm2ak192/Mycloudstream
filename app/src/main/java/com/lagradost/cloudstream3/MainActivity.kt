@@ -1400,6 +1400,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                     )
                 }
 
+                // Register the periodic source/episode notification scan even when
+                // the user has not subscribed to an individual series.
+                SubscriptionWorkManager.enqueuePeriodicWork(this@MainActivity)
+
 // Add your channel creation here
 
             }
