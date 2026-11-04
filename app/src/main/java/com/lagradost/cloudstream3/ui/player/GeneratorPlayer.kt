@@ -3,6 +3,7 @@ package com.lagradost.cloudstream3.ui.player
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
+import androidx.appcompat.app.AlertDialog
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -185,6 +186,7 @@ class GeneratorPlayer : FullScreenPlayer() {
     private val nextMeta: Any? get() = viewModel.state.generatorState?.nextMeta
 
     private var isPlayerActive: AtomicBoolean = AtomicBoolean(false)
+    private var isSourceSelectionShowing: Boolean = false
     private var isNextEpisode: Boolean = false // this is used to reset the watch time
 
     private var preferredAutoSelectSubtitles: String? = null // null means do nothing, "" means none
@@ -1616,15 +1618,40 @@ class GeneratorPlayer : FullScreenPlayer() {
 
         val links = viewModel.state.sortLinks(currentQualityProfile)
 
-        val firstAvailableLink = links.firstOrNull { it.shouldUseLink }?.link
+        val availableLinks = links.filter { it.shouldUseLink && it.link != null }
+        val firstAvailableLink = availableLinks.firstOrNull()?.link
         if (firstAvailableLink == null) {
             noLinksFound()
             return
         }
-        // Atomic operation to prevent double loading
-        if (!isPlayerActive.compareAndSet(false, true)) {
+
+        // Ask for a source/quality before starting the in-app player, just as the
+        // external-player flow does. This is skipped when there is only one usable link.
+        if (availableLinks.size > 1) {
+            if (isSourceSelectionShowing) return
+            val ctx = activity ?: return
+            isSourceSelectionShowing = true
+            val labels = availableLinks.map { display ->
+                val link = display.link!!
+                "${link.name} • ${Qualities.getStringByInt(link.quality)} • ${link.source}"
+            }
+            AlertDialog.Builder(ctx)
+                .setTitle("Choose server and quality")
+                .setItems(labels.toTypedArray()) { _, which ->
+                    isSourceSelectionShowing = false
+                    val selected = availableLinks.getOrNull(which)?.link ?: return@setItems
+                    if (isPlayerActive.compareAndSet(false, true)) {
+                        loadLink(selected, false)
+                        showPlayerMetadata()
+                    }
+                }
+                .setOnCancelListener { isSourceSelectionShowing = false }
+                .show()
             return
         }
+
+        // Atomic operation to prevent double loading
+        if (!isPlayerActive.compareAndSet(false, true)) return
         loadLink(firstAvailableLink, false)
         showPlayerMetadata()
     }
