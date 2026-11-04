@@ -366,6 +366,10 @@
         android:name="com.lagradost.cloudstream3.ui.download.MediaLibraryFragment"
         android:label="Video library" />
     <fragment
+        android:id="@+id/navigation_video_cache_stats"
+        android:name="com.lagradost.cloudstream3.ui.settings.VideoCacheStatsFragment"
+        android:label="@string/smart_video_cache_stats_title" />
+    <fragment
         android:id="@+id/navigation_settings"
         android:name="com.lagradost.cloudstream3.ui.settings.SettingsFragment2"
         android:layout_height="match_parent"
