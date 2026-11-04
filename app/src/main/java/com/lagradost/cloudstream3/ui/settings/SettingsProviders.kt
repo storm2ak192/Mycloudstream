@@ -1,6 +1,8 @@
 package com.lagradost.cloudstream3.ui.settings
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import androidx.core.content.edit
 import androidx.navigation.fragment.findNavController
@@ -27,6 +29,8 @@ import com.lagradost.cloudstream3.utils.SubtitleHelper.getNameNextToFlagEmoji
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 
 class SettingsProviders : BasePreferenceFragmentCompat() {
+    private val sourceRefreshHandler = Handler(Looper.getMainLooper())
+    private val delayedSourceRefresh = Runnable { refreshSourceNotificationPreferences() }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpToolbar(R.string.category_providers)
@@ -162,6 +166,13 @@ class SettingsProviders : BasePreferenceFragmentCompat() {
         // Rebuild this list whenever the screen is opened again so extensions
         // installed after the first visit are immediately selectable.
         refreshSourceNotificationPreferences()
+        sourceRefreshHandler.removeCallbacks(delayedSourceRefresh)
+        sourceRefreshHandler.postDelayed(delayedSourceRefresh, 700L)
+    }
+
+    override fun onPause() {
+        sourceRefreshHandler.removeCallbacks(delayedSourceRefresh)
+        super.onPause()
     }
 
     private fun refreshSourceNotificationPreferences() {
