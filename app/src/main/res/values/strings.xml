@@ -826,4 +826,9 @@
     <string name="smart_video_cache_keep_summary">Keep cached video segments for later playback and seeking.</string>
     <string name="smart_video_cache_custom_title">Custom cache size</string>
     <string name="smart_video_cache_custom_message">Enter cache size in MB (100–1024).</string>
+    <string name="source_notifications_category">New content notifications by source</string>
+    <string name="source_notifications_episodes">Episodes — %1$s</string>
+    <string name="source_notifications_movies">Movies — %1$s</string>
+    <string name="source_notifications_episodes_summary">Notify when this source reports new episodes.</string>
+    <string name="source_notifications_movies_summary">Notify when this source adds a new movie.</string>
 </resources>
