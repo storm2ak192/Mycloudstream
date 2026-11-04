@@ -512,6 +512,14 @@ class PlayerView @JvmOverloads constructor(
         view.text = "$elapsed • -$remaining"
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (clockBatteryOverlay?.isVisible == true) {
+            overlayHandler.removeCallbacks(clockBatteryUpdater)
+            overlayHandler.post(clockBatteryUpdater)
+        }
+    }
+
     override fun onDetachedFromWindow() {
         overlayHandler.removeCallbacks(clockBatteryUpdater)
         super.onDetachedFromWindow()
