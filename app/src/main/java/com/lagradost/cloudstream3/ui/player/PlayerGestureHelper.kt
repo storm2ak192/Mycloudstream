@@ -125,6 +125,7 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
 
     /** Gesture settings (read from prefs in initialize) */
     var swipeVerticalEnabled: Boolean = true
+    var brightnessGestureEnabled: Boolean = true
     var swipeHorizontalEnabled: Boolean = false
     var extraBrightnessEnabled: Boolean = false
     var speedupEnabled: Boolean = false
@@ -217,6 +218,7 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
         try {
             val sm = PreferenceManager.getDefaultSharedPreferences(context)
             swipeVerticalEnabled = sm.getBoolean(context.getString(R.string.swipe_vertical_enabled_key), true)
+            brightnessGestureEnabled = sm.getBoolean(context.getString(R.string.player_brightness_gesture_enabled_key), true)
             swipeHorizontalEnabled = sm.getBoolean(context.getString(R.string.swipe_enabled_key), true)
             extraBrightnessEnabled = sm.getBoolean(context.getString(R.string.extra_brightness_key), false)
             speedupEnabled = sm.getBoolean(context.getString(R.string.speedup_key), false)
@@ -1107,7 +1109,21 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (hasTriggeredSpeedUp) return true
+                if (hasTriggeredSpeedUp) {
+                    val start = currentTouchStart
+                    if (start != null) {
+                        val delta = (currentTouch.x - start.x) / view.width.toFloat().coerceAtLeast(1f)
+                        val step = (kotlin.math.abs(delta) * 10f).roundToInt().coerceIn(0, 5)
+                        val speed = if (delta >= 0f) {
+                            listOf(2.0f, 2.25f, 2.5f, 3.0f, 3.5f, 4.0f)[step]
+                        } else {
+                            listOf(2.0f, 1.5f, 1.0f, 0.75f, 0.5f, 0.25f)[step]
+                        }
+                        playerView.player.setPlaybackSpeed(speed)
+                        (playerView.playerSpeedupButton as? android.widget.TextView)?.text = "${speed}x"
+                    }
+                    return true
+                }
                 if (!isCurrentTouchValid) return true
 
                 if (currentTouchAction == null && startTouch != null) {
@@ -1117,7 +1133,7 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
                             holdHandler.removeCallbacks(holdRunnable)
                             uiShowingBeforeGesture = playerView.callbacks?.isUIShowing() ?: false
                             playerView.callbacks?.onHidePlayerUI()
-                            currentTouchAction = if ((startTouch.x) >= view.width / 2f)
+                            currentTouchAction = if (!brightnessGestureEnabled || (startTouch.x) >= view.width / 2f)
                                 TouchAction.Volume else TouchAction.Brightness
                         }
                     }
