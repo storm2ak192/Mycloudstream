@@ -117,6 +117,6 @@ object VideoCacheStats {
     @Synchronized
     fun clearCacheLabels(context: Context) {
         val p = prefs(context)
-        p.edit().apply { p.all.keys.filter { it.startsWith("cache_label_") }.forEach(::remove) }
+        p.edit().apply { p.all.keys.filter { it.startsWith("cache_label_") }.forEach { key -> remove(key) } }
     }
 }
