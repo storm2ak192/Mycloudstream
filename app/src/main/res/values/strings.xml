@@ -831,4 +831,8 @@
     <string name="source_notifications_movies">Movies — %1$s</string>
     <string name="source_notifications_episodes_summary">Notify when this source reports new episodes.</string>
     <string name="source_notifications_movies_summary">Notify when this source adds a new movie.</string>
+    <string name="smart_video_cache_stats_key">smart_video_cache_stats</string>
+    <string name="smart_video_cache_stats_title">Internet usage statistics</string>
+    <string name="smart_video_cache_stats_summary">View measured playback data from the internet and data reused from cache.</string>
+    <string name="smart_video_cache_stats_reset">Reset playback statistics</string>
 </resources>
