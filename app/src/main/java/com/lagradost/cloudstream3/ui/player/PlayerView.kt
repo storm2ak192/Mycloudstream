@@ -19,6 +19,11 @@ import android.text.format.DateUtils
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import android.view.Gravity
+import android.graphics.Color
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
 import android.widget.FrameLayout
@@ -212,6 +217,15 @@ class PlayerView @JvmOverloads constructor(
     private var exoPosition: TextView? = null
     private var timeLive: View? = null
     private var exoProgress: LivePreviewTimeBar? = null
+    private var clockBatteryOverlay: TextView? = null
+    private var elapsedRemainingOverlay: TextView? = null
+    private val overlayHandler = Handler(Looper.getMainLooper())
+    private val clockBatteryUpdater = object : Runnable {
+        override fun run() {
+            updateClockBatteryOverlay()
+            overlayHandler.postDelayed(this, 30_000L)
+        }
+    }
 
     /** Seek delta used by the basic rew/ffwd click listeners. Read from settings in [initialize]. */
     var seekTime: Long = 10_000L
@@ -258,6 +272,8 @@ class PlayerView @JvmOverloads constructor(
         playerRew = root.findViewById(R.id.player_rew)
         playerRewHolder = root.findViewById(R.id.player_rew_holder)
         playerSpeedupButton = root.findViewById(R.id.player_speedup_button)
+        clockBatteryOverlay = root.findViewById(R.id.player_clock_battery_overlay)
+        elapsedRemainingOverlay = root.findViewById(R.id.player_elapsed_remaining_overlay)
         playerSpeedIndicator = root.findViewById(R.id.player_speed_indicator)
         playerVideoHolder = root.findViewById(R.id.player_video_holder)
         subtitleHolder = root.findViewById(R.id.subtitle_holder)
@@ -418,6 +434,11 @@ class PlayerView @JvmOverloads constructor(
             // Keep remaining-time text in sync with playback position
             exoPosition?.doOnTextChanged { _, _, _, _ -> updateRemainingTime() }
 
+            applyPlayerOverlays()
+            updateClockBatteryOverlay()
+            overlayHandler.removeCallbacks(clockBatteryUpdater)
+            overlayHandler.post(clockBatteryUpdater)
+
             // Delegate gesture/input setup (settings, brightness overlay, touch gestures, key listener)
             gestureHelper.initialize()
             setupKeyEventListener()
@@ -431,6 +452,69 @@ class PlayerView @JvmOverloads constructor(
         val label = if (speed % 1f == 0f) "${speed.toInt()}x" else "${speed}x"
         playerSpeedIndicator?.text = label
         playerSpeedIndicator?.isVisible = true
+    }
+
+    private fun applyPlayerOverlays() {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        fun style(view: TextView?, prefix: String, rightSide: Boolean) {
+            view ?: return
+            val enabled = prefs.getBoolean("${prefix}_enabled", false)
+            view.isVisible = enabled
+            if (!enabled) return
+            val top = prefs.getBoolean("${prefix}_top", true)
+            val offset = prefs.getInt("${prefix}_offset", 0).coerceIn(0, 300)
+            val size = prefs.getInt("${prefix}_size", 14).coerceIn(10, 30)
+            val alpha = prefs.getInt("${prefix}_alpha", 65).coerceIn(0, 100) / 100f
+            val textColor = prefs.getInt("${prefix}_text_color", Color.WHITE)
+            val backgroundColor = prefs.getInt("${prefix}_background_color", Color.BLACK)
+            view.setTextColor(textColor)
+            view.textSize = size.toFloat()
+            view.background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 8f
+                setColor((backgroundColor and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24))
+            }
+            val params = view.layoutParams as? FrameLayout.LayoutParams ?: return
+            params.gravity = (if (top) Gravity.TOP else Gravity.BOTTOM) or
+                (if (rightSide) Gravity.END else Gravity.START)
+            if (rightSide) {
+                params.marginEnd = (14 + offset).dpToPx()
+                params.marginStart = 0
+            } else {
+                params.marginStart = (14 + offset).dpToPx()
+                params.marginEnd = 0
+            }
+            params.topMargin = if (top) 14.dpToPx() else 0
+            params.bottomMargin = if (top) 0 else 14.dpToPx()
+            view.layoutParams = params
+        }
+        style(clockBatteryOverlay, "player_clock_battery", true)
+        style(elapsedRemainingOverlay, "player_elapsed_remaining", false)
+    }
+
+    private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
+
+    private fun updateClockBatteryOverlay() {
+        val view = clockBatteryOverlay ?: return
+        if (!view.isVisible) return
+        val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+        val battery = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val level = battery?.getIntExtra("level", -1) ?: -1
+        val scale = battery?.getIntExtra("scale", 100) ?: 100
+        val percent = if (level >= 0 && scale > 0) (level * 100 / scale) else -1
+        view.text = if (percent >= 0) "$time • $percent%" else time
+    }
+
+    private fun updateElapsedRemainingOverlay(position: Long, duration: Long) {
+        val view = elapsedRemainingOverlay ?: return
+        if (!view.isVisible || duration <= 0L) return
+        val elapsed = DateUtils.formatElapsedTime(position.coerceAtLeast(0L) / 1000L)
+        val remaining = DateUtils.formatElapsedTime((duration - position).coerceAtLeast(0L) / 1000L)
+        view.text = "$elapsed • -$remaining"
+    }
+
+    override fun onDetachedFromWindow() {
+        overlayHandler.removeCallbacks(clockBatteryUpdater)
+        super.onDetachedFromWindow()
     }
 
     /** Lifecycle delegation */
@@ -812,10 +896,13 @@ class PlayerView @JvmOverloads constructor(
                 scheduleAutoHide()
                 callbacks?.playerStatusChanged()
             }
-            is PositionEvent -> callbacks?.playerPositionChanged(
-                position = event.toMs,
-                duration = event.durationMs
-            )
+            is PositionEvent -> {
+                updateElapsedRemainingOverlay(event.toMs, event.durationMs)
+                callbacks?.playerPositionChanged(
+                    position = event.toMs,
+                    duration = event.durationMs
+                )
+            }
             is VideoEndedEvent -> {
                 // Only play next episode if autoplay is on (default).
                 val ctx = context
