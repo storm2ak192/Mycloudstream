@@ -110,14 +110,7 @@ object VideoCacheStats {
         val labels = p.all.filterKeys { it.startsWith("cache_label_") }
         p.edit().clear().apply()
         if (labels.isNotEmpty()) p.edit().apply {
-            labels.forEach { (key, value) -> when (value) {
-                is String -> putString(key, value)
-                is Long -> putLong(key, value)
-                is Int -> putInt(key, value)
-                is Boolean -> putBoolean(key, value)
-                is Float -> putFloat(key, value)
-                is Set<*> -> @Suppress("UNCHECKED_CAST") putStringSet(key, value as Set<String>)
-            } }
+            labels.forEach { (key, value) -> if (value is String) putString(key, value) }
         }
     }
 
