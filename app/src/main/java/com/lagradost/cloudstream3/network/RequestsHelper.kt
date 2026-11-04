@@ -47,13 +47,27 @@ fun buildDefaultClient(context: Context, ignoreSSL: Boolean = false): OkHttpClie
             }
         }
         .cache(
-            // Note that you need to add a ResponseInterceptor to make this 100% active.
-            // The server response dictates if and when stuff should be cached.
             Cache(
                 directory = File(context.cacheDir, "http_cache"),
-                maxSize = 50L * 1024L * 1024L // 50 MiB
+                maxSize = 64L * 1024L * 1024L // 64 MiB
             )
-        ).apply {
+        )
+        // Reuse short-lived public HTML/JSON responses when users revisit a source.
+        // Never cache authenticated requests or responses that set cookies.
+        .addNetworkInterceptor { chain ->
+            val request = chain.request()
+            val response = chain.proceed(request)
+            val contentType = response.header("Content-Type").orEmpty().lowercase()
+            val isPublicPage = request.method == "GET" &&
+                request.header("Cookie").isNullOrBlank() &&
+                response.header("Set-Cookie").isNullOrBlank() &&
+                (contentType.contains("text/html") || contentType.contains("application/json"))
+            if (isPublicPage && response.header("Cache-Control").isNullOrBlank()) {
+                response.newBuilder()
+                    .header("Cache-Control", "public, max-age=30")
+                    .build()
+            } else response
+        }.apply {
             when (dns) {
                 1 -> addGoogleDns()
                 2 -> addCloudFlareDns()
