@@ -641,11 +641,13 @@ object VideoDownloadManager {
 
         fun setDownloadFileInfoTemplate(template: DownloadedFileInfo) {
             downloadFileInfoTemplate = template
-            VideoCacheStats.setDownloadLabel(
-                app,
-                id,
-                listOf(template.relativePath, template.displayName).filter { it.isNotBlank() }.joinToString("/")
-            )
+            com.lagradost.cloudstream3.CloudStreamApp.context?.let { context ->
+                VideoCacheStats.setDownloadLabel(
+                    context,
+                    id,
+                    listOf(template.relativePath, template.displayName).filter { it.isNotBlank() }.joinToString("/")
+                )
+            }
             updateFileInfo()
         }
 
@@ -758,7 +760,9 @@ object VideoDownloadManager {
         /** adds the length and pushes a notification if necessary */
         fun addBytes(length: Long) {
             bytesDownloaded += length
-            VideoCacheStats.recordDownloadBytes(app, length, id)
+            com.lagradost.cloudstream3.CloudStreamApp.context?.let { context ->
+                VideoCacheStats.recordDownloadBytes(context, length, id)
+            }
             // we don't want to update the notification after it is paused,
             // download progress may not stop directly when we "pause" it
             if (type == DownloadType.IsDownloading) checkNotification()
