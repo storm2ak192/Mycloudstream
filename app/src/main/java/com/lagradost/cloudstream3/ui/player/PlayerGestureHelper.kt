@@ -135,6 +135,7 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
     var hasTriggeredSpeedUp = false
     val holdRunnable = Runnable {
         playerView.player.setPlaybackSpeed(2.0f)
+        (playerView.playerSpeedupButton as? android.widget.TextView)?.text = "2x"
         showOrHideSpeedUp(true)
         playerView.callbacks?.onHoldSpeedUp(true)
         hasTriggeredSpeedUp = true
