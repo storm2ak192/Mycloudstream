@@ -6,10 +6,12 @@ import androidx.core.content.edit
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.NavOptions
 import androidx.preference.PreferenceManager
+import androidx.preference.ListPreference
 import androidx.preference.PreferenceCategory
 import androidx.preference.SwitchPreferenceCompat
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.services.sourceNotificationPreferenceKey
+import com.lagradost.cloudstream3.services.SubscriptionWorkManager
 import com.lagradost.cloudstream3.ui.APIRepository
 import com.lagradost.cloudstream3.ui.BasePreferenceFragmentCompat
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
@@ -143,6 +145,13 @@ class SettingsProviders : BasePreferenceFragmentCompat() {
 
             return@setOnPreferenceClickListener true
         }
+
+        findPreference<ListPreference>(getString(R.string.source_notification_scan_interval_key))
+            ?.setOnPreferenceChangeListener { _, newValue ->
+                val minutes = newValue.toString().toLongOrNull()?.coerceIn(30L, 120L) ?: 60L
+                SubscriptionWorkManager.enqueuePeriodicWork(requireContext(), minutes)
+                true
+            }
 
         val notificationCategory = PreferenceCategory(requireContext()).apply {
             title = getString(R.string.source_notifications_category)
