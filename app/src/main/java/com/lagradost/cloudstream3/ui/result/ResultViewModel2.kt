@@ -2,6 +2,7 @@ package com.lagradost.cloudstream3.ui.result
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.DialogInterface
 import android.util.Log
 import android.widget.Toast
@@ -1221,6 +1222,29 @@ class ResultViewModel2 : ViewModel() {
     }
 
     private var currentLoadLinkJob: Job? = null
+    private fun chooseDownloadTarget(link: ExtractorLink, downloadInApp: () -> Unit) {
+        val ctx = activity ?: run {
+            downloadInApp()
+            return
+        }
+        AlertDialog.Builder(ctx)
+            .setTitle("Download using")
+            .setItems(arrayOf("Download inside this app", "1DM or another download app")) { _, which ->
+                if (which == 0) {
+                    downloadInApp()
+                } else {
+                    val send = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, link.url)
+                        putExtra(Intent.EXTRA_TITLE, link.name)
+                    }
+                    ctx.startActivity(Intent.createChooser(send, "Send video link to"))
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     private fun acquireSingleLink(
         result: ResultEpisode,
         sourceTypes: Set<ExtractorLinkType>,
@@ -1480,21 +1504,24 @@ class ResultViewModel2 : ViewModel() {
                     LOADTYPE_INAPP_DOWNLOAD,
                     txt(R.string.episode_action_download_mirror)
                 ) { (links, index) ->
-                    DownloadQueueManager.addToQueue(
-                        DownloadObjects.DownloadQueueItem(
-                            click.data,
-                            response.isMovie(),
-                            response.name,
-                            response.type,
-                            response.posterUrl,
-                            response.apiName,
-                            response.getId(),
-                            response.url,
-                            listOf(links.links[index]),
-                            links.subs,
-                        ).toWrapper()
-                    )
-                    showToast(R.string.download_started, Toast.LENGTH_SHORT)
+                    val selectedLink = links.links[index]
+                    chooseDownloadTarget(selectedLink) {
+                        DownloadQueueManager.addToQueue(
+                            DownloadObjects.DownloadQueueItem(
+                                click.data,
+                                response.isMovie(),
+                                response.name,
+                                response.type,
+                                response.posterUrl,
+                                response.apiName,
+                                response.getId(),
+                                response.url,
+                                listOf(selectedLink),
+                                links.subs,
+                            ).toWrapper()
+                        )
+                        showToast(R.string.download_started, Toast.LENGTH_SHORT)
+                    }
                 }
             }
 
@@ -1505,24 +1532,24 @@ class ResultViewModel2 : ViewModel() {
                     LOADTYPE_INAPP_DOWNLOAD,
                     txt(R.string.episode_action_download_mirror)
                 ) { (result, index) ->
-                    DownloadQueueManager.addToQueue(
-                        DownloadObjects.DownloadQueueItem(
-                            click.data,
-                            response.isMovie(),
-                            response.name,
-                            response.type,
-                            response.posterUrl,
-                            response.apiName,
-                            response.getId(),
-                            response.url,
-                            listOf(result.links[index]),
-                            result.subs,
-                        ).toWrapper()
-                    )
-                    showToast(
-                        R.string.download_started,
-                        Toast.LENGTH_SHORT
-                    )
+                    val selectedLink = result.links[index]
+                    chooseDownloadTarget(selectedLink) {
+                        DownloadQueueManager.addToQueue(
+                            DownloadObjects.DownloadQueueItem(
+                                click.data,
+                                response.isMovie(),
+                                response.name,
+                                response.type,
+                                response.posterUrl,
+                                response.apiName,
+                                response.getId(),
+                                response.url,
+                                listOf(selectedLink),
+                                result.subs,
+                            ).toWrapper()
+                        )
+                        showToast(R.string.download_started, Toast.LENGTH_SHORT)
+                    }
                 }
             }
 
