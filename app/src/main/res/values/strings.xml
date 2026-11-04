@@ -814,4 +814,7 @@
     </plurals>
     <string name="player_is_live">Live</string>
     <string name="installed_plugins">Installed plugins</string>
+    <string name="player_brightness_gesture_enabled_key">player_brightness_gesture_enabled</string>
+    <string name="player_brightness_gesture_title">Brightness gesture</string>
+    <string name="player_brightness_gesture_summary">Use the left side for brightness. When disabled, swipe either side to change volume.</string>
 </resources>
