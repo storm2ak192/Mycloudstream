@@ -130,6 +130,13 @@
             app:key="@string/software_decoding_key" />
         <SwitchPreference
             android:icon="@drawable/sun_7_24"
+            android:title="@string/player_brightness_gesture_title"
+            android:summary="@string/player_brightness_gesture_summary"
+            app:defaultValue="true"
+            app:key="@string/player_brightness_gesture_enabled_key" />
+
+        <SwitchPreference
+            android:icon="@drawable/sun_7_24"
             android:summary="@string/extra_brightness_settings_des"
             android:title="@string/extra_brightness_settings"
             app:defaultValue="false"
@@ -150,12 +157,6 @@
             android:title="@string/swipe_to_change_settings"
             app:defaultValue="true"
             app:key="@string/swipe_vertical_enabled_key" />
-        <SwitchPreference
-            android:icon="@drawable/sun_7_24"
-            android:title="@string/player_brightness_gesture_title"
-            android:summary="@string/player_brightness_gesture_summary"
-            app:defaultValue="true"
-            app:key="@string/player_brightness_gesture_enabled_key" />
         <SwitchPreference
             android:icon="@drawable/ic_baseline_touch_app_24"
             android:summary="@string/double_tap_to_seek_settings_des"
