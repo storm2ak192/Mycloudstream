@@ -231,10 +231,6 @@ class DownloadFragment : BaseFragment<FragmentDownloadsBinding>(
         }
 
         binding.apply {
-            mediaLibraryButton.setOnClickListener {
-                activity?.navigate(R.id.action_navigation_downloads_to_navigation_media_library)
-            }
-
             openLocalVideoButton.apply {
                 isGone = isLayout(TV)
                 setOnClickListener { openLocalVideo() }

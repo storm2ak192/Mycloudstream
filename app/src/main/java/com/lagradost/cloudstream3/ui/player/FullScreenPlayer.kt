@@ -501,6 +501,7 @@ open class FullScreenPlayer : AbstractPlayerFragment<FragmentPlayerBinding>(
         }
 
         player.setPlaybackSpeed(speed)
+        playerHostView?.setPlaybackSpeedIndicator(speed)
     }
 
     private fun skipOp() {

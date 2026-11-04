@@ -1100,6 +1100,24 @@
         android:layout_height="match_parent">
 
     </FrameLayout>
+    <TextView
+        android:id="@+id/player_speed_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="24dp"
+        android:background="#99000000"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:text="1x"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        tools:ignore="HardcodedText" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/player_speedup_button"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"

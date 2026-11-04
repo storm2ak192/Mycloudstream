@@ -205,6 +205,7 @@ class PlayerView @JvmOverloads constructor(
     var playerProgressbarRightLevel2: ProgressBar? = null
     /** Accessed by [PlayerGestureHelper.showOrHideSpeedUp]. */
     internal var playerSpeedupButton: View? = null
+    private var playerSpeedIndicator: TextView? = null
     var playerHolder: FrameLayout? = null
     private var exoDuration: TextView? = null
     private var timeLeft: TextView? = null
@@ -257,6 +258,7 @@ class PlayerView @JvmOverloads constructor(
         playerRew = root.findViewById(R.id.player_rew)
         playerRewHolder = root.findViewById(R.id.player_rew_holder)
         playerSpeedupButton = root.findViewById(R.id.player_speedup_button)
+        playerSpeedIndicator = root.findViewById(R.id.player_speed_indicator)
         playerVideoHolder = root.findViewById(R.id.player_video_holder)
         subtitleHolder = root.findViewById(R.id.subtitle_holder)
         timeLeft = root.findViewById(R.id.time_left)
@@ -423,6 +425,12 @@ class PlayerView @JvmOverloads constructor(
             // Apply duration-mode display (remaining time vs elapsed); TV always shows remaining
             setRemainingTimeCounter(durationMode || isLayout(TV))
         }
+    }
+
+    fun setPlaybackSpeedIndicator(speed: Float) {
+        val label = if (speed % 1f == 0f) "${speed.toInt()}x" else "${speed}x"
+        playerSpeedIndicator?.text = label
+        playerSpeedIndicator?.isVisible = true
     }
 
     /** Lifecycle delegation */

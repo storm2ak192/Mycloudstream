@@ -331,14 +331,6 @@
         app:popEnterAnim="@anim/enter_anim"
         app:popExitAnim="@anim/exit_anim"
         tools:layout="@layout/fragment_downloads">
-
-        <action
-            android:id="@+id/action_navigation_downloads_to_navigation_media_library"
-            app:destination="@id/navigation_media_library"
-            app:enterAnim="@anim/enter_anim"
-            app:exitAnim="@anim/exit_anim"
-            app:popEnterAnim="@anim/enter_anim"
-            app:popExitAnim="@anim/exit_anim" />
         <action
             android:id="@+id/action_navigation_downloads_to_navigation_download_child"
             app:destination="@id/navigation_download_child"
@@ -361,10 +353,6 @@
             app:popEnterAnim="@anim/enter_anim"
             app:popExitAnim="@anim/exit_anim" />
     </fragment>
-    <fragment
-        android:id="@+id/navigation_media_library"
-        android:name="com.lagradost.cloudstream3.ui.download.MediaLibraryFragment"
-        android:label="Video library" />
     <fragment
         android:id="@+id/navigation_video_cache_stats"
         android:name="com.lagradost.cloudstream3.ui.settings.VideoCacheStatsFragment"
