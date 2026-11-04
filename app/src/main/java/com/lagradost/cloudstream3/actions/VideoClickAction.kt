@@ -14,6 +14,7 @@ import com.lagradost.cloudstream3.MainActivity
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.actions.temp.BiglyBTPackage
 import com.lagradost.cloudstream3.actions.temp.CopyClipboardAction
+import com.lagradost.cloudstream3.actions.temp.DownloadWith1DMAction
 import com.lagradost.cloudstream3.actions.temp.JustPlayerPackage
 import com.lagradost.cloudstream3.actions.temp.LibreTorrentPackage
 import com.lagradost.cloudstream3.actions.temp.MpvExPackage
@@ -50,6 +51,7 @@ object VideoClickActionHolder {
         // Default
         PlayInBrowserAction(),
         CopyClipboardAction(),
+        DownloadWith1DMAction(),
         ViewM3U8Action(),
         PlayMirrorAction(),
         // main support external apps
