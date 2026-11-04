@@ -1115,12 +1115,11 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
                     val start = currentTouchStart
                     if (start != null) {
                         val delta = (currentTouch.x - start.x) / view.width.toFloat().coerceAtLeast(1f)
-                        val step = (kotlin.math.abs(delta) * 10f).roundToInt().coerceIn(0, 5)
-                        val speed = if (delta >= 0f) {
-                            listOf(2.0f, 2.25f, 2.5f, 3.0f, 3.5f, 4.0f)[step]
-                        } else {
-                            listOf(2.0f, 1.5f, 1.0f, 0.75f, 0.5f, 0.25f)[step]
-                        }
+                        // A 5% horizontal movement changes the speed by one 0.25x step.
+                        // This is deliberately more responsive than the previous coarse
+                        // 10%-per-step mapping, while remaining bounded.
+                        val adjustmentSteps = (delta * 20f).roundToInt()
+                        val speed = (2.0f + adjustmentSteps * 0.25f).coerceIn(0.25f, 4.0f)
                         playerView.player.setPlaybackSpeed(speed)
                         playerView.setPlaybackSpeedIndicator(speed)
                         (playerView.playerSpeedupButton as? android.widget.TextView)?.text = "${speed}x"
