@@ -173,6 +173,8 @@
         <item>400MB</item>
         <item>450MB</item>
         <item>500MB</item>
+        <item>1GB</item>
+        <item>@string/smart_video_cache_custom_title</item>
     </array>
 
     <array name="video_buffer_size_values">
@@ -195,6 +197,8 @@
         <item>400</item>
         <item>450</item>
         <item>500</item>
+        <item>1024</item>
+        <item>-1</item>
     </array>
 
     <array name="poster_ui_options">
