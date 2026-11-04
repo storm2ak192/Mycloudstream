@@ -6,7 +6,10 @@ import androidx.core.content.edit
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.NavOptions
 import androidx.preference.PreferenceManager
+import androidx.preference.PreferenceCategory
+import androidx.preference.SwitchPreferenceCompat
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.services.sourceNotificationPreferenceKey
 import com.lagradost.cloudstream3.ui.APIRepository
 import com.lagradost.cloudstream3.ui.BasePreferenceFragmentCompat
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
@@ -139,6 +142,30 @@ class SettingsProviders : BasePreferenceFragmentCompat() {
             }
 
             return@setOnPreferenceClickListener true
+        }
+
+        val notificationCategory = PreferenceCategory(requireContext()).apply {
+            title = getString(R.string.source_notifications_category)
+        }
+        preferenceScreen?.addPreference(notificationCategory)
+        val notificationProviders = APIHolder.apis.withLock { APIHolder.apis.toList() }
+        notificationProviders.sortedBy { it.name.lowercase() }.forEach { provider ->
+            notificationCategory.addPreference(
+                SwitchPreferenceCompat(requireContext()).apply {
+                    key = sourceNotificationPreferenceKey(provider.name, "episodes")
+                    title = getString(R.string.source_notifications_episodes, provider.name)
+                    summary = getString(R.string.source_notifications_episodes_summary)
+                    setDefaultValue(true)
+                }
+            )
+            notificationCategory.addPreference(
+                SwitchPreferenceCompat(requireContext()).apply {
+                    key = sourceNotificationPreferenceKey(provider.name, "movies")
+                    title = getString(R.string.source_notifications_movies, provider.name)
+                    summary = getString(R.string.source_notifications_movies_summary)
+                    setDefaultValue(true)
+                }
+            )
         }
     }
 }
