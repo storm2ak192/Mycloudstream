@@ -65,7 +65,10 @@ class MediaLibraryFragment : Fragment() {
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { refreshLibrary() }
+    ) { granted ->
+        refreshLibrary(requestPermission = false)
+        if (!granted) status.text = "Storage permission denied. CloudStream downloads are still shown."
+    }
 
     override fun onCreateView(
         inflater: android.view.LayoutInflater,
@@ -160,19 +163,14 @@ class MediaLibraryFragment : Fragment() {
         return root
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (this::list.isInitialized) refreshLibrary()
-    }
-
     private fun hasVideoPermission(): Boolean {
         val permission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_VIDEO
             else Manifest.permission.READ_EXTERNAL_STORAGE
         return ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun refreshLibrary() {
-        if (!hasVideoPermission()) {
+    private fun refreshLibrary(requestPermission: Boolean = true) {
+        if (!hasVideoPermission() && requestPermission) {
             val permission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_VIDEO
                 else Manifest.permission.READ_EXTERNAL_STORAGE
             permissionLauncher.launch(permission)
