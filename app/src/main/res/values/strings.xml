@@ -840,4 +840,14 @@
     <string name="smart_video_cache_stats_reset">Reset playback statistics</string>
     <string name="source_notifications_enabled">Enable notifications — %1$s</string>
     <string name="source_notifications_enabled_summary">Master switch for this source’s episode and movie notifications.</string>
+    <string name="video_cache_manage_episodes">Cached episodes and videos</string>
+    <string name="video_cache_manage_sources">Cached sources</string>
+    <string name="video_cache_no_entries">No cache entries tracked yet. New playback cache entries will appear here.</string>
+    <string name="video_cache_delete_episode">Delete this episode's cache</string>
+    <string name="video_cache_delete_source">Delete all cache from this source</string>
+    <string name="video_cache_delete_confirm">Delete the selected cached data? This does not delete downloaded video files.</string>
+    <string name="video_cache_reset_confirm">Reset measured traffic statistics? Cached video files will not be deleted.</string>
+    <string name="video_cache_disk_usage">Cache currently stored: %1$s</string>
+    <string name="video_cache_delete_done">Removed %1$d cached resource(s).</string>
+    <string name="video_cache_stats_reset_done">Traffic statistics reset.</string>
 </resources>
