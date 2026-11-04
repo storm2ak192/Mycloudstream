@@ -26,6 +26,7 @@ import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpTo
 import com.lagradost.cloudstream3.ui.subtitles.ChromecastSubtitlesFragment
 import com.lagradost.cloudstream3.ui.subtitles.SubtitlesFragment
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
+import com.lagradost.cloudstream3.utils.VideoCacheStats
 import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showDialog
@@ -325,6 +326,23 @@ class SettingsPlayer : BasePreferenceFragmentCompat() {
                 }
             }
             return@setOnPreferenceClickListener true
+        }
+
+        getPref(R.string.smart_video_cache_stats_key)?.setOnPreferenceClickListener {
+            val ctx = requireContext()
+            val cacheDirectory = java.io.File(ctx.filesDir, "video_cache")
+            val cacheBytes = getFolderSize(cacheDirectory)
+            val message = VideoCacheStats.getSummary(ctx) +
+                "\n\nCached files currently stored: ${formatShortFileSize(ctx, cacheBytes)}"
+            AlertDialog.Builder(ctx)
+                .setTitle(R.string.smart_video_cache_stats_title)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, null)
+                .setNeutralButton(R.string.smart_video_cache_stats_reset) { _, _ ->
+                    VideoCacheStats.clear(ctx)
+                }
+                .show()
+            true
         }
 
         getPref(R.string.video_buffer_clear_key)?.let { pref ->
