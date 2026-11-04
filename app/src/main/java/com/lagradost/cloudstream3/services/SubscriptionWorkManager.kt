@@ -7,9 +7,11 @@ import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.Build.VERSION.SDK_INT
 import androidx.core.app.NotificationCompat
 import androidx.core.app.PendingIntentCompat
+import androidx.preference.PreferenceManager
 import androidx.core.net.toUri
 import androidx.work.*
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.APIHolder
 import com.lagradost.cloudstream3.APIHolder.getApiFromNameNull
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.mvvm.logError
@@ -31,6 +33,9 @@ const val SUBSCRIPTION_WORK_NAME = "work_subscription"
 const val SUBSCRIPTION_CHANNEL_NAME = "Subscriptions"
 const val SUBSCRIPTION_CHANNEL_DESCRIPTION = "Notifications for new episodes on subscribed shows"
 const val SUBSCRIPTION_NOTIFICATION_ID = 938712897 // Random unique
+
+fun sourceNotificationPreferenceKey(providerName: String, contentType: String): String =
+    "source_notifications_${providerName.hashCode()}_$contentType"
 
 class SubscriptionWorkManager(val context: Context, workerParams: WorkerParameters) :
     CoroutineWorker(context, workerParams) {
@@ -115,21 +120,92 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                 ) else ForegroundInfo(SUBSCRIPTION_NOTIFICATION_ID, progressNotificationBuilder.build(),)
             setForeground(foregroundInfo)
 
-            val subscriptions = getAllSubscriptions()
+            // Load installed extensions before scanning their first-page feeds.
+            PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(context)
+            PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllLocalPlugins(context, false)
 
-            if (subscriptions.isEmpty()) {
-                WorkManager.getInstance(context).cancelWorkById(this.id)
-                return Result.success()
+            val sourcePreferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val seenItems = context.getSharedPreferences("source_notification_seen", Context.MODE_PRIVATE)
+            val providers = APIHolder.apis.withLock { APIHolder.apis.toList() }
+
+            providers.forEach { api ->
+                try {
+                    if (!api.hasMainPage) return@forEach
+                    val suffix = api.name.hashCode()
+                    val episodesEnabled = sourcePreferences.getBoolean(
+                        sourceNotificationPreferenceKey(api.name, "episodes"), true
+                    )
+                    val moviesEnabled = sourcePreferences.getBoolean(
+                        sourceNotificationPreferenceKey(api.name, "movies"), true
+                    )
+                    val baselineKey = "baseline_$suffix"
+                    val hasBaseline = seenItems.getBoolean(baselineKey, false)
+
+                    api.mainPage.take(3).forEach { pageRequest ->
+                        try {
+                            val page = withTimeoutOrNull(25_000) {
+                                api.getMainPage(
+                                    1,
+                                    MainPageRequest(pageRequest.name, pageRequest.data, pageRequest.horizontalImages)
+                                )
+                            } ?: return@forEach
+
+                            page.items.flatMap { it.list }.forEach { item ->
+                                val itemKey = "item_${suffix}_${item.url.hashCode()}"
+                                val previousCount = seenItems.getString(itemKey, null)?.toIntOrNull()
+                                val episodeCount = when (item) {
+                                    is AnimeSearchResponse -> item.episodes.values.maxOrNull()
+                                    is TvSeriesSearchResponse -> item.episodes
+                                    else -> null
+                                }
+                                val isMovie = item is MovieSearchResponse || item.type?.isMovieType() == true
+
+                                val notificationText = when {
+                                    isMovie && moviesEnabled && hasBaseline && previousCount == null ->
+                                        "New movie available from ${api.name}"
+                                    !isMovie && episodesEnabled && episodeCount != null &&
+                                        hasBaseline && previousCount != null && episodeCount > previousCount ->
+                                        "New episodes: $previousCount → $episodeCount"
+                                    !isMovie && episodesEnabled && episodeCount != null &&
+                                        hasBaseline && previousCount == null ->
+                                        "New series or episodes available from ${api.name}"
+                                    else -> null
+                                }
+
+                                if (notificationText != null) {
+                                    val notificationId = ("${api.name}|${item.url}|$notificationText").hashCode()
+                                    val intent = Intent(context, MainActivity::class.java).apply {
+                                        data = item.url.toUri()
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                    }.putExtra(MainActivity.API_NAME_EXTRA_KEY, api.name)
+                                    val pendingIntent = PendingIntentCompat.getActivity(context, notificationId, intent, 0, false)
+                                    val notification = updateNotificationBuilder
+                                        .setContentTitle(item.name)
+                                        .setContentText(notificationText)
+                                        .setContentIntent(pendingIntent)
+                                        .build()
+                                    notificationManager.notify(notificationId, notification)
+                                }
+
+                                val storedCount = episodeCount ?: previousCount ?: 0
+                                seenItems.edit().putString(itemKey, storedCount.toString()).apply()
+                            }
+                        } catch (t: Throwable) {
+                            logError(t)
+                        }
+                    }
+                    seenItems.edit().putBoolean(baselineKey, true).apply()
+                } catch (t: Throwable) {
+                    logError(t)
+                }
             }
+
+            val subscriptions = getAllSubscriptions()
+            if (subscriptions.isEmpty()) return Result.success()
 
             val max = subscriptions.size
             var progress = 0
-
             updateProgress(max, progress, true)
-
-            // We need all plugins loaded.
-            PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(context)
-            PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllLocalPlugins(context, false)
 
             subscriptions.amap { savedData ->
                 try {
@@ -172,7 +248,11 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                         response
                     )
 
-                    if (shouldUpdate) {
+                    val episodeNotificationsEnabled = PreferenceManager
+                        .getDefaultSharedPreferences(context)
+                        .getBoolean(sourceNotificationPreferenceKey(api.name, "episodes"), true)
+
+                    if (shouldUpdate && episodeNotificationsEnabled) {
                         val updateHeader = savedData.name
                         val updateDescription = txt(
                             R.string.subscription_episode_released,
