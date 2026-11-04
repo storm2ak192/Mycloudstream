@@ -1142,8 +1142,7 @@ class GeneratorPlayer : FullScreenPlayer() {
 
                         sourcesArrayAdapter.addAll(filteredLinks.map { displayLink ->
                             val (link, uri) = displayLink.link
-                            val name = link?.name ?: uri?.name ?: "NULL"
-                            "$name ${Qualities.getStringByInt(link?.quality)}"
+                            link?.displayNameWithQuality() ?: uri?.name ?: "NULL"
                         })
 
                         providerList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
