@@ -1572,6 +1572,8 @@ class CS3IPlayer : IPlayer {
         audioSources: List<MediaSource> = emptyList(),
         onlineSource: HttpDataSource.Factory? = null,
     ) {
+        synchronized(chapterMarkers) { chapterMarkers.clear() }
+        event(ChaptersChangedEvent())
         Log.i(TAG, "loadExo")
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(context)
         val maxVideoHeight = settingsManager.getInt(
@@ -1656,7 +1658,9 @@ class CS3IPlayer : IPlayer {
                     } ?: 0L
                     val detected = (0 until metadata.length).mapNotNull { index ->
                         metadata[index] as? Chapter
-                    }.filterNot { it.isHidden }.mapIndexed { index, chapter ->
+                    }.filterNot { it.isHidden }
+                        .filter { it.startTimeMs != TIME_UNSET && it.startTimeMs >= windowOffsetMs }
+                        .mapIndexed { index, chapter ->
                         val title = chapter.title?.toString()?.takeIf { it.isNotBlank() }
                             ?: "Chapter ${index + 1}"
                         PlayerChapter(title, (chapter.startTimeMs - windowOffsetMs).coerceAtLeast(0L))
