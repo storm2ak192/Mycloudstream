@@ -104,7 +104,6 @@ class VideoCacheStatsFragment : Fragment() {
         layout.addView(playbackLiveView)
         layout.addView(downloadLiveView)
         addText(VideoCacheStats.getSummary(context), 15f)
-        trafficRefresh.run()
         addText(getString(R.string.video_cache_disk_usage, Formatter.formatShortFileSize(context, diskBytes)), 14f, true)
         addButton(getString(R.string.smart_video_cache_stats_reset)) {
             AlertDialog.Builder(context)
