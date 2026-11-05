@@ -3,6 +3,8 @@ package com.lagradost.cloudstream3.ui.result
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
 import android.content.DialogInterface
 import android.util.Log
 import android.widget.Toast
@@ -66,6 +68,7 @@ import com.lagradost.cloudstream3.mvvm.safe
 import com.lagradost.cloudstream3.mvvm.safeApiCall
 import com.lagradost.cloudstream3.runAllAsync
 import com.lagradost.cloudstream3.sortUrls
+import com.lagradost.cloudstream3.utils.DownloadTargetPreference
 import com.lagradost.cloudstream3.syncproviders.AccountManager
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.secondsToReadable
 import com.lagradost.cloudstream3.syncproviders.SyncAPI
@@ -1223,23 +1226,70 @@ class ResultViewModel2 : ViewModel() {
     }
 
     private var currentLoadLinkJob: Job? = null
+
+    private fun sendToExternalDownloader(ctx: Context, link: ExtractorLink) {
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, link.url)
+            putExtra(Intent.EXTRA_TITLE, link.name)
+        }
+        ctx.startActivity(Intent.createChooser(send, "Choose external downloader"))
+    }
+
+    private fun sendTo1Dm(ctx: Context, link: ExtractorLink) {
+        val packages = listOf(
+            "idm.internet.download.manager",
+            "idm.internet.download.manager.plus",
+            "idm.internet.download.manager.adm.lite"
+        )
+        val headers = (if (link.referer.isBlank()) emptyMap() else mapOf("referer" to link.referer)) + link.headers
+        for (packageName in packages) {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link.url)).apply {
+                    setClassName(packageName, "idm.internet.download.manager.Downloader")
+                    putExtra("extra_filename", link.name)
+                    putExtra(Intent.EXTRA_TITLE, link.name)
+                    putExtra("headers", Bundle().apply {
+                        headers.forEach { (key, value) -> putString(key, value) }
+                    })
+                }
+                ctx.startActivity(intent)
+                return
+            } catch (_: android.content.ActivityNotFoundException) {
+                // Try the next official 1DM package variant.
+            } catch (t: Throwable) {
+                logError(t)
+            }
+        }
+        showToast("1DM is not installed. Choose another downloader.", Toast.LENGTH_LONG)
+        sendToExternalDownloader(ctx, link)
+    }
+
     private fun chooseDownloadTarget(link: ExtractorLink, downloadInApp: () -> Unit) {
         val ctx = activity ?: run {
             downloadInApp()
             return
         }
+        val options = arrayOf(
+            "Download inside this app",
+            "Download with 1DM",
+            "Use another download app"
+        )
+        val preferred = DownloadTargetPreference.get(ctx)
+        val checked = when (preferred) {
+            DownloadTargetPreference.IN_APP -> 0
+            DownloadTargetPreference.ONE_DM -> 1
+            DownloadTargetPreference.EXTERNAL -> 2
+            else -> -1
+        }
         AlertDialog.Builder(ctx)
-            .setTitle("Download using")
-            .setItems(arrayOf("Download inside this app", "1DM or another download app")) { _, which ->
-                if (which == 0) {
-                    downloadInApp()
-                } else {
-                    val send = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, link.url)
-                        putExtra(Intent.EXTRA_TITLE, link.name)
-                    }
-                    ctx.startActivity(Intent.createChooser(send, "Send video link to"))
+            .setTitle("Choose download method")
+            .setSingleChoiceItems(options, checked) { dialog, which ->
+                dialog.dismiss()
+                when (which) {
+                    0 -> downloadInApp()
+                    1 -> sendTo1Dm(ctx, link)
+                    2 -> sendToExternalDownloader(ctx, link)
                 }
             }
             .setNegativeButton(android.R.string.cancel, null)
