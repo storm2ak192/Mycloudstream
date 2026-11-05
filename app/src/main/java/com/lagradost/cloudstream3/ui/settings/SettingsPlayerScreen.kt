@@ -44,7 +44,7 @@ object SettingsPlayerScreen : SearchableSettings {
         val context = LocalContext.current
         val defaultPlayerName = stringResource(R.string.player_settings_play_in_app)
         val players = remember(context) {
-            mapOf("" to defaultPlayerName) + VideoClickActionHolder.getPlayers()
+            mapOf("" to defaultPlayerName) + VideoClickActionHolder.getPlayers(context)
                 .associate { player ->
                     player.uniqueId() to (player.name.asStringNull(context)
                         ?: player::class.simpleName ?: player::class.jvmName)
