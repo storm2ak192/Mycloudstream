@@ -1,3 +1,5 @@
 Build the current master branch as an installable stable debug APK.
 
 Retry build after correcting Media3 chapter metadata API.
+
+Retry after adapting chapter parsing to Media3 1.9.3.
