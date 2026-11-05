@@ -1410,7 +1410,11 @@ class CS3IPlayer : IPlayer {
                             isNetwork: Boolean,
                             bytesTransferred: Int
                         ) {
-                            if (isNetwork) transferredBytes += bytesTransferred.toLong()
+                            if (isNetwork) {
+                                val chunkBytes = bytesTransferred.toLong()
+                                transferredBytes += chunkBytes
+                                VideoCacheStats.recordLivePlaybackBytes(chunkBytes)
+                            }
                         }
                         override fun onTransferEnd(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
                             if (isNetwork && transferredBytes > 0L) {
