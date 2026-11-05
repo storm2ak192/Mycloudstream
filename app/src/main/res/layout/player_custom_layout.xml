@@ -633,7 +633,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:layout_marginTop="60dp"
-                android:layout_marginEnd="12dp"
+                android:layout_marginEnd="260dp"
+                android:layout_gravity="top|end"
                 android:backgroundTint="@color/skipOpTransparent"
                 android:maxLines="1"
                 android:paddingStart="12dp"
@@ -642,8 +643,6 @@
                 android:textColor="@color/white"
                 android:visibility="gone"
                 app:cornerRadius="@dimen/rounded_button_radius"
-                app:layout_constraintEnd_toStartOf="@id/skip_chapter_button"
-                app:layout_constraintTop_toTopOf="@+id/player_top_holder"
                 app:strokeColor="@color/white"
                 app:strokeWidth="1dp" />
 
