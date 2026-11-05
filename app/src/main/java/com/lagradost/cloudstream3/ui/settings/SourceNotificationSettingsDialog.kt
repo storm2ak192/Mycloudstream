@@ -60,6 +60,7 @@ object SourceNotificationSettingsDialog {
         root.addView(intervalButton)
 
         val controls = mutableListOf<Triple<String, CheckBox, CheckBox>>()
+        val movieControls = mutableMapOf<String, CheckBox>()
         if (providers.isEmpty()) {
             root.addView(TextView(context).apply {
                 text = context.getString(R.string.source_notifications_empty_summary)
@@ -130,12 +131,8 @@ object SourceNotificationSettingsDialog {
             .show()
     }
 
-    private val movieControls = mutableMapOf<String, CheckBox>()
-
-    private fun intervalLabel(context: Context, minutes: Long): String = when (minutes) {
-        15L -> context.getString(R.string.source_notification_interval_15)
-        30L -> context.getString(R.string.source_notification_interval_30)
-        60L -> context.getString(R.string.source_notification_interval_60)
-        else -> context.getString(R.string.source_notification_interval_120)
+    private fun intervalLabel(context: Context, minutes: Long): String {
+        val index = intervals.indexOf(minutes).coerceAtLeast(0)
+        return context.resources.getStringArray(R.array.source_notification_scan_intervals)[index]
     }
 }
