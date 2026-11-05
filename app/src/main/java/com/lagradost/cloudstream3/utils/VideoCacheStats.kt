@@ -111,6 +111,7 @@ object VideoCacheStats {
             append("\n\nPlayback videos/episodes (URL-based):\n"); append(if (media.isBlank()) "No measured traffic yet" else media)
             append("\n\nDownloads by item:\n"); append(if (downloads.isBlank()) "No measured downloads yet" else downloads)
             append("\n\nCounts are payload bytes observed by app data sources; headers and transport overhead are excluded.")
+            append("\nTraffic downloaded by 1DM or other external apps is not visible to this app.")
         }
     }
 
