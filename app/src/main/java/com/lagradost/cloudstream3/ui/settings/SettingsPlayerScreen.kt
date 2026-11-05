@@ -311,11 +311,6 @@ object SettingsPlayerScreen : SearchableSettings {
                             ShowPlayerInfo.VideoInfo to stringResource(R.string.video_info),
                         )
                     ), */
-                )
-            ),
-            Preference.PreferenceGroup(
-                title = stringResource(R.string.pref_category_player_layout),
-                preferenceItems = persistentListOf(
                     Preference.PreferenceItem.TextPreference(
                         title = stringResource(R.string.player_clock_battery_overlay_title),
                         subtitle = stringResource(R.string.player_overlay_settings_summary),
