@@ -1,1 +1,3 @@
 Build the current master branch as an installable stable debug APK.
+
+Retry build after correcting Media3 chapter metadata API.
