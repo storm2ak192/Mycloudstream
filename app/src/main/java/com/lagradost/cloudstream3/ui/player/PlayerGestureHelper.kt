@@ -282,21 +282,6 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
         keyEventListener = null
     }
 
-    /** Speed-up */
-
-    fun showOrHideSpeedUp(show: Boolean) {
-        playerView.playerSpeedupButton?.let { btn ->
-            btn.clearAnimation()
-            btn.alpha = if (show) 0f else 1f
-            btn.isVisible = show
-            btn.animate()
-                .alpha(if (show) 1f else 0f)
-                .setDuration(200L)
-                .withEndAction { if (!show) btn.isVisible = false }
-                .start()
-        }
-    }
-
     /** Volume helpers */
 
     /**
