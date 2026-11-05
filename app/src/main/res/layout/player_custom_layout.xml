@@ -1166,24 +1166,6 @@
         android:visibility="gone"
         tools:ignore="HardcodedText" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/player_speedup_button"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="30dp"
-        app:iconPadding="0dp"
-        app:iconGravity="textStart"
-        android:clickable="false"
-        android:focusable="false"
-        android:textAllCaps="false"
-        android:visibility="gone"
-        app:icon="@drawable/speedup"
-        app:iconTint="@color/textColor"
-        android:foreground="@null"
-        android:backgroundTint="@color/skipOpTransparent"
-        tools:visibility="visible" />
     <LinearLayout
         android:id="@+id/player_episodes_button_root"
         android:layout_width="wrap_content"
