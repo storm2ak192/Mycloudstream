@@ -846,8 +846,10 @@ class CS3IPlayer : IPlayer {
 
             // https://gist.github.com/ShivamKumarJha/3c8398b47053ae05112d2a8f8b5de531
             return try {
+                // Preserve Cronet's disk HTTP cache across player sessions. Deleting this
+                // directory on every app launch forces manifests and reusable responses to
+                // be fetched again even when the media cache is enabled.
                 val cacheDirectory = File(context.cacheDir, "CronetEngine")
-                cacheDirectory.deleteRecursively()
                 if (!cacheDirectory.exists()) {
                     cacheDirectory.mkdirs()
                 }
