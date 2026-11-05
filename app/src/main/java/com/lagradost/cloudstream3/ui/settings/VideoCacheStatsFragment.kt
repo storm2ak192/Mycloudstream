@@ -25,7 +25,7 @@ class VideoCacheStatsFragment : Fragment() {
     private val trafficHandler = Handler(Looper.getMainLooper())
     private val trafficRefresh = object : Runnable {
         override fun run() {
-            val context = context ?: return
+            val context = this@VideoCacheStatsFragment.context ?: return
             playbackLiveView?.text = "Live playback traffic (this app session): ${Formatter.formatShortFileSize(context, VideoCacheStats.getLivePlaybackBytes())}"
             downloadLiveView?.text = "Live internal download traffic (this app session): ${Formatter.formatShortFileSize(context, VideoCacheStats.getLiveDownloadBytes())}"
             trafficHandler.postDelayed(this, 1000L)
