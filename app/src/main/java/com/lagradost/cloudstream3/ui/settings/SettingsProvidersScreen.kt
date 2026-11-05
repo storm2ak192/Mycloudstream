@@ -95,5 +95,6 @@ object SettingsProvidersScreen : SearchableSettings {
                     SourceNotificationSettingsDialog.show(context)
                 }
             )
+        )
     }
 }
