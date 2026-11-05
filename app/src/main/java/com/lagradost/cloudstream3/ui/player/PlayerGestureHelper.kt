@@ -136,8 +136,6 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
     val holdRunnable = Runnable {
         playerView.player.setPlaybackSpeed(2.0f)
         playerView.setPlaybackSpeedIndicator(2.0f)
-        (playerView.playerSpeedupButton as? android.widget.TextView)?.text = "2x"
-        showOrHideSpeedUp(true)
         playerView.callbacks?.onHoldSpeedUp(true)
         hasTriggeredSpeedUp = true
     }
@@ -1122,7 +1120,6 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
                         val speed = (2.0f + adjustmentSteps * 0.25f).coerceIn(0.25f, 4.0f)
                         playerView.player.setPlaybackSpeed(speed)
                         playerView.setPlaybackSpeedIndicator(speed)
-                        (playerView.playerSpeedupButton as? android.widget.TextView)?.text = "${speed}x"
                     }
                     return true
                 }
@@ -1183,8 +1180,7 @@ class PlayerGestureHelper(private val playerView: PlayerView) {
                 holdHandler.removeCallbacks(holdRunnable)
                 if (hasTriggeredSpeedUp) {
                     playerView.player.setPlaybackSpeed(DataStoreHelper.playBackSpeed)
-                    playerView.setPlaybackSpeedIndicator(DataStoreHelper.playBackSpeed)
-                    showOrHideSpeedUp(false)
+                    playerView.hidePlaybackSpeedIndicator()
                     playerView.callbacks?.onHoldSpeedUp(false)
                     hasTriggeredSpeedUp = false
                 }
