@@ -218,6 +218,12 @@ object SettingsPlayerScreen : SearchableSettings {
                         icon = painterResource(R.drawable.swipe_vertical_24px),
                     ),
                     Preference.PreferenceItem.SwitchPreference(
+                        preference = settings.player.brightnessGestureEnabled,
+                        title = stringResource(R.string.player_brightness_gesture_title),
+                        subtitle = stringResource(R.string.player_brightness_gesture_summary),
+                        icon = painterResource(R.drawable.light_mode_24px),
+                    ),
+                    Preference.PreferenceItem.SwitchPreference(
                         preference = settings.player.doubleTapToSeekEnabled,
                         title = stringResource(R.string.double_tap_to_seek_settings),
                         subtitle = stringResource(R.string.double_tap_to_seek_settings_des),
@@ -305,6 +311,33 @@ object SettingsPlayerScreen : SearchableSettings {
                             ShowPlayerInfo.VideoInfo to stringResource(R.string.video_info),
                         )
                     ), */
+                )
+            ),
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.pref_category_player_layout),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.TextPreference(
+                        title = stringResource(R.string.player_clock_battery_overlay_title),
+                        subtitle = stringResource(R.string.player_overlay_settings_summary),
+                        icon = painterResource(R.drawable.schedule_24px),
+                        onClick = {
+                            com.lagradost.cloudstream3.ui.player.PlayerOverlaySettings.show(
+                                context, "player_clock_battery",
+                                context.getString(R.string.player_clock_battery_overlay_title), true
+                            )
+                        }
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        title = stringResource(R.string.player_time_overlay_title),
+                        subtitle = stringResource(R.string.player_overlay_settings_summary),
+                        icon = painterResource(R.drawable.history_toggle_off_24px),
+                        onClick = {
+                            com.lagradost.cloudstream3.ui.player.PlayerOverlaySettings.show(
+                                context, "player_elapsed_remaining",
+                                context.getString(R.string.player_time_overlay_title), false
+                            )
+                        }
+                    ),
                 )
             ),
             Preference.PreferenceGroup(
