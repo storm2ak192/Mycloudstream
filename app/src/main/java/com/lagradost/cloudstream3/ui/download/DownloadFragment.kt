@@ -1,18 +1,14 @@
 package com.lagradost.cloudstream3.ui.download
 
-import android.app.Activity
 import android.app.Dialog
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
-import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 import android.os.Build
 import android.text.format.Formatter.formatShortFileSize
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -33,7 +29,6 @@ import com.lagradost.cloudstream3.ui.download.queue.DownloadQueueViewModel
 import com.lagradost.cloudstream3.ui.player.BasicLink
 import com.lagradost.cloudstream3.ui.player.GeneratorPlayer
 import com.lagradost.cloudstream3.ui.player.LinkGenerator
-import com.lagradost.cloudstream3.ui.player.OfflinePlaybackHelper.playUri
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
 import com.lagradost.cloudstream3.ui.settings.Globals.EMULATOR
@@ -231,10 +226,6 @@ class DownloadFragment : BaseFragment<FragmentDownloadsBinding>(
         }
 
         binding.apply {
-            openLocalVideoButton.apply {
-                isGone = isLayout(TV)
-                setOnClickListener { openLocalVideo() }
-            }
             downloadStreamButton.apply {
                 isGone = isLayout(TV)
                 setOnClickListener { showStreamInputDialog(it.context) }
@@ -299,22 +290,6 @@ class DownloadFragment : BaseFragment<FragmentDownloadsBinding>(
         view?.setLayoutWidth(bytes)
     }
 
-    private fun openLocalVideo() {
-        val intent = Intent()
-            .setAction(Intent.ACTION_GET_CONTENT)
-            .setType("video/*")
-            .addCategory(Intent.CATEGORY_OPENABLE)
-            .addFlags(FLAG_GRANT_READ_URI_PERMISSION) // Request temporary access
-        safe {
-            videoResultLauncher.launch(
-                Intent.createChooser(
-                    intent,
-                    getString(R.string.open_local_video)
-                )
-            )
-        }
-    }
-
     private fun showStreamInputDialog(context: Context) {
         val dialog = Dialog(context, R.style.AlertDialogCustom)
         val binding = StreamInputBinding.inflate(dialog.layoutInflater)
@@ -377,11 +352,4 @@ class DownloadFragment : BaseFragment<FragmentDownloadsBinding>(
     }
 
     // Open local video from files using content provider x safeFile
-    private val videoResultLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
-        val selectedVideoUri = result.data?.data ?: return@registerForActivityResult
-        playUri(activity ?: return@registerForActivityResult, selectedVideoUri)
-    }
 }
