@@ -101,10 +101,7 @@ object SourceNotificationSettingsDialog {
         }
 
         val scroll = ScrollView(context).apply {
-            addView(root, ScrollView.LayoutParams(
-                ScrollView.LayoutParams.MATCH_PARENT,
-                ScrollView.LayoutParams.WRAP_CONTENT
-            ))
+            addView(root)
         }
 
         AlertDialog.Builder(context)
