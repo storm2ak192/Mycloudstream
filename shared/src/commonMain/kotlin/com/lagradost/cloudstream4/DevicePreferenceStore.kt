@@ -176,6 +176,7 @@ class PlayerPreferences(preferences: PreferenceStore) {
     val previewBarEnabled = preferences.getBoolean("preview_seekbar_key", true)
     val softwareDecoding = preferences.getInt("software_decoding_key2", -1)
     val extraBrightnessEnabled = preferences.getBoolean("extra_brightness_key", false)
+    val brightnessGestureEnabled = preferences.getBoolean("player_brightness_gesture_enabled", true)
     val swipeHorizontalEnabled = preferences.getBoolean("swipe_enabled_key", true)
     val swipeVerticalEnabled = preferences.getBoolean("swipe_vertical_enabled_key", true)
     val doubleTapToSeekEnabled = preferences.getBoolean("double_tap_enabled_key", false)
