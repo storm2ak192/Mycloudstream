@@ -1,6 +1,8 @@
 package com.lagradost.cloudstream3.ui.settings
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.format.Formatter
 import android.view.Gravity
 import android.view.View
@@ -18,6 +20,17 @@ import java.io.File
 
 class VideoCacheStatsFragment : Fragment() {
     private var contentLayout: LinearLayout? = null
+    private var playbackLiveView: TextView? = null
+    private var downloadLiveView: TextView? = null
+    private val trafficHandler = Handler(Looper.getMainLooper())
+    private val trafficRefresh = object : Runnable {
+        override fun run() {
+            val context = context ?: return
+            playbackLiveView?.text = "Live playback traffic (this app session): ${Formatter.formatShortFileSize(context, VideoCacheStats.getLivePlaybackBytes())}"
+            downloadLiveView?.text = "Live internal download traffic (this app session): ${Formatter.formatShortFileSize(context, VideoCacheStats.getLiveDownloadBytes())}"
+            trafficHandler.postDelayed(this, 1000L)
+        }
+    }
 
     override fun onCreateView(
         inflater: android.view.LayoutInflater,
@@ -39,6 +52,21 @@ class VideoCacheStatsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         renderPage()
+        trafficHandler.removeCallbacks(trafficRefresh)
+        trafficHandler.post(trafficRefresh)
+    }
+
+    override fun onPause() {
+        trafficHandler.removeCallbacks(trafficRefresh)
+        super.onPause()
+    }
+
+    override fun onDestroyView() {
+        trafficHandler.removeCallbacks(trafficRefresh)
+        playbackLiveView = null
+        downloadLiveView = null
+        contentLayout = null
+        super.onDestroyView()
     }
 
     private fun addText(text: String, size: Float = 15f, bold: Boolean = false) {
@@ -71,7 +99,12 @@ class VideoCacheStatsFragment : Fragment() {
         val cacheDirectory = File(context.filesDir, "video_cache")
         val diskBytes = cacheDirectory.walkTopDown().filter { it.isFile }.sumOf { it.length() }
 
+        playbackLiveView = TextView(context).apply { textSize = 15f; setPadding(0, 12, 0, 12) }
+        downloadLiveView = TextView(context).apply { textSize = 15f; setPadding(0, 12, 0, 12) }
+        layout.addView(playbackLiveView)
+        layout.addView(downloadLiveView)
         addText(VideoCacheStats.getSummary(context), 15f)
+        trafficRefresh.run()
         addText(getString(R.string.video_cache_disk_usage, Formatter.formatShortFileSize(context, diskBytes)), 14f, true)
         addButton(getString(R.string.smart_video_cache_stats_reset)) {
             AlertDialog.Builder(context)
