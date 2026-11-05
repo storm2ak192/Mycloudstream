@@ -99,10 +99,12 @@ class VideoCacheStatsFragment : Fragment() {
         val cacheDirectory = File(context.filesDir, "video_cache")
         val diskBytes = cacheDirectory.walkTopDown().filter { it.isFile }.sumOf { it.length() }
 
-        playbackLiveView = TextView(context).apply { textSize = 15f; setPadding(0, 12, 0, 12) }
-        downloadLiveView = TextView(context).apply { textSize = 15f; setPadding(0, 12, 0, 12) }
-        layout.addView(playbackLiveView)
-        layout.addView(downloadLiveView)
+        val playbackView = TextView(context).apply { textSize = 15f; setPadding(0, 12, 0, 12) }
+        val downloadView = TextView(context).apply { textSize = 15f; setPadding(0, 12, 0, 12) }
+        playbackLiveView = playbackView
+        downloadLiveView = downloadView
+        layout.addView(playbackView)
+        layout.addView(downloadView)
         addText(VideoCacheStats.getSummary(context), 15f)
         addText(getString(R.string.video_cache_disk_usage, Formatter.formatShortFileSize(context, diskBytes)), 14f, true)
         addButton(getString(R.string.smart_video_cache_stats_reset)) {
