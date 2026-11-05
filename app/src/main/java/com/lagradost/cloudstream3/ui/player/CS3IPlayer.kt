@@ -30,6 +30,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
+import androidx.media3.common.Timeline
 import androidx.media3.common.VideoSize
 // import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
@@ -1647,12 +1648,18 @@ class CS3IPlayer : IPlayer {
                 }
 
                 override fun onMetadata(metadata: Metadata) {
+                    val windowOffsetMs = exoPlayer?.let { activePlayer ->
+                        if (activePlayer.currentTimeline.isEmpty) 0L
+                        else activePlayer.currentTimeline.getWindow(
+                            activePlayer.currentMediaItemIndex, Timeline.Window()
+                        ).positionInFirstPeriodUs / 1000L
+                    } ?: 0L
                     val detected = (0 until metadata.length).mapNotNull { index ->
                         metadata[index] as? Chapter
                     }.filterNot { it.isHidden }.mapIndexed { index, chapter ->
                         val title = chapter.title?.toString()?.takeIf { it.isNotBlank() }
                             ?: "Chapter ${index + 1}"
-                        PlayerChapter(title, chapter.startTimeMs)
+                        PlayerChapter(title, (chapter.startTimeMs - windowOffsetMs).coerceAtLeast(0L))
                     }.distinctBy { it.startMs }.sortedBy { it.startMs }
 
                     if (detected.isNotEmpty()) {
