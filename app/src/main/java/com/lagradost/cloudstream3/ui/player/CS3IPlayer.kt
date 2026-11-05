@@ -23,6 +23,7 @@ import androidx.media3.common.C.TRACK_TYPE_TEXT
 import androidx.media3.common.C.TRACK_TYPE_VIDEO
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Metadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -46,6 +47,7 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.cronet.CronetDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.extractor.metadata.Chapter
 import androidx.media3.exoplayer.DecoderCounters
 import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.exoplayer.DefaultLivePlaybackSpeedControl
@@ -230,6 +232,11 @@ class CS3IPlayer : IPlayer {
     private var requestedListeningPercentages: List<Int>? = null
 
     private var eventHandler: ((PlayerEvent) -> Unit)? = null
+    private val chapterMarkers = mutableListOf<PlayerChapter>()
+
+    override fun getChapters(): List<PlayerChapter> = synchronized(chapterMarkers) {
+        chapterMarkers.toList()
+    }
 
     @AnyThread
     fun event(event: PlayerEvent) {
@@ -1634,6 +1641,30 @@ class CS3IPlayer : IPlayer {
             LiveHelper.registerPlayer(exoPlayer)
 
             exoPlayer?.addListener(object : Player.Listener {
+                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                    synchronized(chapterMarkers) { chapterMarkers.clear() }
+                    event(ChaptersChangedEvent())
+                }
+
+                override fun onMetadata(metadata: Metadata) {
+                    val detected = (0 until metadata.length).mapNotNull { index ->
+                        metadata[index] as? Chapter
+                    }.filterNot { it.isHidden }.mapIndexed { index, chapter ->
+                        val title = chapter.title?.toString()?.takeIf { it.isNotBlank() }
+                            ?: "Chapter ${index + 1}"
+                        PlayerChapter(title, chapter.startTimeMs)
+                    }.distinctBy { it.startMs }.sortedBy { it.startMs }
+
+                    if (detected.isNotEmpty()) {
+                        synchronized(chapterMarkers) {
+                            val merged = (chapterMarkers + detected).distinctBy { it.startMs }.sortedBy { it.startMs }
+                            chapterMarkers.clear()
+                            chapterMarkers.addAll(merged)
+                        }
+                        event(ChaptersChangedEvent())
+                    }
+                }
+
                 override fun onTracksChanged(tracks: Tracks) {
                     safe {
                         val textTracks = tracks.groups.filter { it.type == TRACK_TYPE_TEXT }
