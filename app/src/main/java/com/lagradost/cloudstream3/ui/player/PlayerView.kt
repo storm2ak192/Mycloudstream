@@ -33,6 +33,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.MainThread
+import androidx.appcompat.app.AlertDialog
 import androidx.annotation.OptIn
 import androidx.core.view.isGone
 import androidx.core.view.isInvisible
@@ -219,6 +220,7 @@ class PlayerView @JvmOverloads constructor(
     private var exoProgress: LivePreviewTimeBar? = null
     private var clockBatteryOverlay: TextView? = null
     private var elapsedRemainingOverlay: TextView? = null
+    private var playerChapterButton: View? = null
     private val overlayHandler = Handler(Looper.getMainLooper())
     private val clockBatteryUpdater = object : Runnable {
         override fun run() {
@@ -275,6 +277,7 @@ class PlayerView @JvmOverloads constructor(
         clockBatteryOverlay = root.findViewById(R.id.player_clock_battery_overlay)
         elapsedRemainingOverlay = root.findViewById(R.id.player_elapsed_remaining_overlay)
         playerSpeedIndicator = root.findViewById(R.id.player_speed_indicator)
+        playerChapterButton = root.findViewById(R.id.player_chapters_button)
         playerVideoHolder = root.findViewById(R.id.player_video_holder)
         subtitleHolder = root.findViewById(R.id.subtitle_holder)
         timeLeft = root.findViewById(R.id.time_left)
@@ -286,6 +289,8 @@ class PlayerView @JvmOverloads constructor(
      * player callbacks and basic controls; then delegates gesture/input setup to [gestureHelper].
      */
     fun initialize() {
+        playerChapterButton?.setOnClickListener { showChapterPicker() }
+        updateChaptersButton()
         resizeMode = DataStoreHelper.resizeMode
         resize(resizeMode, false)
 
@@ -896,6 +901,7 @@ class PlayerView @JvmOverloads constructor(
             is TimestampSkippedEvent -> callbacks?.onTimestampSkipped(event.timestamp)
             is TimestampInvokedEvent -> callbacks?.onTimestamp(event.timestamp)
             is TracksChangedEvent -> callbacks?.onTracksInfoChanged()
+            is ChaptersChangedEvent -> updateChaptersButton()
             is EmbeddedSubtitlesFetchedEvent -> callbacks?.embeddedSubtitlesFetched(event.tracks)
             is ErrorEvent -> callbacks?.playerError(event.error) ?: playerError(event.error)
             is RequestAudioFocusEvent -> requestAudioFocus()
@@ -927,6 +933,30 @@ class PlayerView @JvmOverloads constructor(
             is PauseEvent -> Unit
             is PlayEvent -> Unit
         }
+    }
+
+    private fun updateChaptersButton() {
+        playerChapterButton?.isVisible = player.getChapters().isNotEmpty()
+    }
+
+    private fun showChapterPicker() {
+        val chapters = player.getChapters()
+        if (chapters.isEmpty()) {
+            playerChapterButton?.isGone = true
+            return
+        }
+        val labels = chapters.map { chapter ->
+            "${DateUtils.formatElapsedTime(chapter.startMs.coerceAtLeast(0L) / 1000L)}  •  ${chapter.title}"
+        }
+        AlertDialog.Builder(context)
+            .setTitle(R.string.player_chapters_title)
+            .setItems(labels.toTypedArray()) { _, which ->
+                chapters.getOrNull(which)?.let { chapter ->
+                    player.seekTo(chapter.startMs.coerceAtLeast(0L), PlayerEventSource.UI)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     /** Duration display */
