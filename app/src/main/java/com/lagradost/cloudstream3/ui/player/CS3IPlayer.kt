@@ -48,7 +48,7 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.cronet.CronetDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
-import androidx.media3.extractor.metadata.Chapter
+import androidx.media3.extractor.metadata.id3.ChapterFrame
 import androidx.media3.exoplayer.DecoderCounters
 import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.exoplayer.DefaultLivePlaybackSpeedControl
@@ -1662,15 +1662,15 @@ class CS3IPlayer : IPlayer {
                             activePlayer.currentMediaItemIndex, Timeline.Window()
                         ).positionInFirstPeriodUs / 1000L
                     } ?: 0L
-                    val detected = (0 until metadata.length).mapNotNull { index ->
-                        metadata[index] as? Chapter
+                    val detected = (0 until metadata.length()).mapNotNull { index ->
+                        metadata.get(index) as? ChapterFrame
                     }.filterNot { it.isHidden }
-                        .filter { it.startTimeMs != TIME_UNSET && it.startTimeMs >= windowOffsetMs }
+                        .filter { it.getStartTimeMs() != TIME_UNSET && it.getStartTimeMs() >= windowOffsetMs }
                         .mapIndexed { index, chapter ->
-                        val title = chapter.title?.toString()?.takeIf { it.isNotBlank() }
-                            ?: "Chapter ${index + 1}"
-                        PlayerChapter(title, (chapter.startTimeMs - windowOffsetMs).coerceAtLeast(0L))
-                    }.distinctBy { it.startMs }.sortedBy { it.startMs }
+                            val title = chapter.getTitle()?.toString()?.takeIf { it.isNotBlank() }
+                                ?: "Chapter ${index + 1}"
+                            PlayerChapter(title, (chapter.getStartTimeMs() - windowOffsetMs).coerceAtLeast(0L))
+                        }.distinctBy { it.startMs }.sortedBy { it.startMs }
 
                     if (detected.isNotEmpty()) {
                         synchronized(chapterMarkers) {
