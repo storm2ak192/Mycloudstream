@@ -2,6 +2,8 @@ package com.lagradost.cloudstream3.actions.temp
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
 import com.lagradost.cloudstream3.actions.VideoClickAction
 import com.lagradost.cloudstream3.ui.result.LinkLoadingResult
 import com.lagradost.cloudstream3.ui.result.ResultEpisode
@@ -9,9 +11,8 @@ import com.lagradost.cloudstream3.utils.ExtractorLinkType
 import com.lagradost.cloudstream3.utils.txt
 
 /**
- * Sends the exact selected extractor URL to Android's share targets.
- * 1DM can receive the URL from the chooser without hard-coding a package id.
- * Custom request headers are not transferred by this generic share contract.
+ * Sends the selected extractor URL directly to an installed 1DM variant,
+ * preserving the provider's request headers when supported by 1DM.
  */
 class DownloadWith1DMAction : VideoClickAction() {
     override val name = txt("Download with 1DM")
@@ -36,11 +37,34 @@ class DownloadWith1DMAction : VideoClickAction() {
             ?: result.links.singleOrNull()
             ?: return
 
+        val headers = (if (selected.referer.isBlank()) emptyMap() else mapOf("referer" to selected.referer)) + selected.headers
+        val packages = listOf(
+            "idm.internet.download.manager",
+            "idm.internet.download.manager.plus",
+            "idm.internet.download.manager.adm.lite"
+        )
+        for (packageName in packages) {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(selected.url)).apply {
+                    setClassName(packageName, "idm.internet.download.manager.Downloader")
+                    putExtra("extra_filename", selected.name)
+                    putExtra(Intent.EXTRA_TITLE, selected.name)
+                    putExtra("headers", Bundle().apply {
+                        headers.forEach { (key, value) -> putString(key, value) }
+                    })
+                }
+                launch(intent)
+                return
+            } catch (_: android.content.ActivityNotFoundException) {
+                // Continue with the next installed 1DM variant.
+            }
+        }
+
         val sendIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, selected.url)
             putExtra(Intent.EXTRA_TITLE, selected.name)
         }
-        launch(Intent.createChooser(sendIntent, "Download with"))
+        launch(Intent.createChooser(sendIntent, "Choose a download app"))
     }
 }
