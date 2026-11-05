@@ -832,6 +832,7 @@
     <string name="source_notifications_category">New content notifications by source</string>
     <string name="player_clock_battery_overlay_title">Clock and battery overlay</string>
     <string name="player_time_overlay_title">Elapsed and remaining time overlay</string>
+    <string name="player_chapters_title">Chapters</string>
     <string name="player_overlay_settings_summary">Show and customize this information group in the player.</string>
     <string name="source_notifications_episodes">Episodes — %1$s</string>
     <string name="source_notifications_movies">Movies — %1$s</string>
