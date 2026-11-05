@@ -39,15 +39,33 @@ open class MxPlayerPackage(
 
         intent.action = Intent.ACTION_VIEW
         intent.setDataAndType(selected.url.toUri(), "video/*")
-        // Supply a human-readable title instead of allowing MX Player to derive one
-        // from an opaque CDN URL or a temporary token.
-        intent.putExtra(Intent.EXTRA_TITLE, video.name)
-        intent.putExtra("title", video.name)
-        intent.putExtra("name", video.name)
+        val activityClass = if (packageName.endsWith(".pro")) {
+            "com.mxtech.videoplayer.ActivityScreen"
+        } else {
+            "com.mxtech.videoplayer.ad.ActivityScreen"
+        }
+        intent.setClassName(packageName, activityClass)
+
+        val episodeTitle = video.headerName + " • الحلقة " + video.episode +
+            (video.name?.takeIf { it.isNotBlank() && it != video.headerName }?.let { " - " + it } ?: "")
+        intent.putExtra(Intent.EXTRA_TITLE, episodeTitle)
+        intent.putExtra("title", episodeTitle)
+        intent.putExtra("name", episodeTitle)
+        if (video.position > 0L) {
+            intent.putExtra("position", video.position.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
+        }
+        intent.putExtra("return_result", true)
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
-    override fun onResult(activity: Activity, intent: Intent?) = Unit
+    override fun onResult(activity: Activity, intent: Intent?) {
+        if (intent?.action != "com.mxtech.intent.result.VIEW") return
+        val position = intent.getIntExtra("position", -1)
+        val duration = intent.getIntExtra("duration", -1)
+        if (position > 0 && duration > 0) {
+            com.lagradost.cloudstream3.actions.updateDurationAndPosition(position.toLong(), duration.toLong())
+        }
+    }
 }
 
 class MxPlayerProPackage : MxPlayerPackage(
