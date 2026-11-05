@@ -319,7 +319,7 @@ object SettingsPlayerScreen : SearchableSettings {
                     Preference.PreferenceItem.TextPreference(
                         title = stringResource(R.string.player_clock_battery_overlay_title),
                         subtitle = stringResource(R.string.player_overlay_settings_summary),
-                        icon = painterResource(R.drawable.schedule_24px),
+                        icon = painterResource(R.drawable.ic_baseline_clock_24),
                         onClick = {
                             com.lagradost.cloudstream3.ui.player.PlayerOverlaySettings.show(
                                 context, "player_clock_battery",
