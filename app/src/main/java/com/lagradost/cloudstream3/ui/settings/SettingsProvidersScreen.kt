@@ -1,6 +1,7 @@
 package com.lagradost.cloudstream3.ui.settings
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.lagradost.cloudstream3.APIHolder
@@ -46,6 +47,7 @@ object SettingsProvidersScreen : SearchableSettings {
     @Composable
     override fun getPreferences(): List<Preference> {
         val settings = rememberAppSettings()
+        val context = LocalContext.current
 
         val default = AllLanguagesName to stringResource(R.string.all_languages_preference)
         val languages = APIHolder.apis.withLock {
@@ -84,6 +86,14 @@ object SettingsProvidersScreen : SearchableSettings {
             icon = painterResource(R.drawable.baseline_network_ping_24),
             onClick = {
                 activity?.navigate(R.id.navigation_test_providers)
-            }))
+            }),
+            Preference.PreferenceItem.TextPreference(
+                title = stringResource(R.string.source_notifications_category),
+                subtitle = stringResource(R.string.source_notification_scan_interval_summary),
+                icon = painterResource(R.drawable.notifications_active_24px),
+                onClick = {
+                    SourceNotificationSettingsDialog.show(context)
+                }
+            )
     }
 }
