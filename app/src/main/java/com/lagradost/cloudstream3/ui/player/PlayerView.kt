@@ -454,6 +454,10 @@ class PlayerView @JvmOverloads constructor(
         playerSpeedIndicator?.isVisible = true
     }
 
+    fun hidePlaybackSpeedIndicator() {
+        playerSpeedIndicator?.isGone = true
+    }
+
     private fun applyPlayerOverlays() {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         fun style(view: TextView?, prefix: String, rightSide: Boolean) {
