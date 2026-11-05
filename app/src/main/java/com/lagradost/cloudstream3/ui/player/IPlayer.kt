@@ -46,6 +46,12 @@ abstract class PlayerEvent {
     abstract val source: PlayerEventSource
 }
 
+data class PlayerChapter(val title: String, val startMs: Long)
+
+data class ChaptersChangedEvent(
+    override val source: PlayerEventSource = PlayerEventSource.Player
+) : PlayerEvent()
+
 /** this is used to update UI based of the current time,
  * using requestedListeningPercentages as well as saving time */
 data class PositionEvent(
@@ -213,6 +219,8 @@ interface IPlayer {
     fun getIsPlaying(): Boolean
     /** Current player duration in milliseconds */
     fun getDuration(): Long?
+    /** Chapter markers embedded in the currently playing media, if available. */
+    fun getChapters(): List<PlayerChapter> = emptyList()
     /** Current player position in milliseconds */
     fun getPosition(): Long?
 
