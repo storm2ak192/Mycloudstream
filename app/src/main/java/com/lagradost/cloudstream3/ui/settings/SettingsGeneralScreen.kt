@@ -2,6 +2,7 @@ package com.lagradost.cloudstream3.ui.settings
 
 import android.content.Intent
 import android.net.Uri
+import androidx.appcompat.app.AlertDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -28,6 +29,7 @@ import com.lagradost.cloudstream3.insecureApp
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.ui.settings.SettingsProvidersScreen.toStringRes
+import com.lagradost.cloudstream3.utils.DownloadTargetPreference
 import com.lagradost.cloudstream3.utils.BatteryOptimizationChecker.isAppRestricted
 import com.lagradost.cloudstream3.utils.BatteryOptimizationChecker.showRequestIgnoreBatteryOptDialog
 import com.lagradost.cloudstream3.utils.SubtitleHelper.fromTagToLanguageName
@@ -87,6 +89,7 @@ object SettingsGeneralScreen : SearchableSettings {
 
         var isBatteryShown by remember { mutableStateOf(false) }
         val context = LocalContext.current
+        var preferredDownloader by remember { mutableStateOf(DownloadTargetPreference.get(context)) }
 
         if (isBatteryShown) {
             ActionDialog(
@@ -168,6 +171,44 @@ object SettingsGeneralScreen : SearchableSettings {
                             // system.
                             selectFileSelector.launch(Uri.EMPTY)
                         },
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        title = "Preferred download method",
+                        subtitle = when (preferredDownloader) {
+                            DownloadTargetPreference.IN_APP -> "Download inside this app"
+                            DownloadTargetPreference.ONE_DM -> "1DM"
+                            DownloadTargetPreference.EXTERNAL -> "Another download app"
+                            else -> "Ask every time"
+                        },
+                        icon = painterResource(R.drawable.netflix_download),
+                        onClick = {
+                            val labels = arrayOf(
+                                "Ask every time",
+                                "Download inside this app",
+                                "1DM",
+                                "Another download app"
+                            )
+                            val selected = when (preferredDownloader) {
+                                DownloadTargetPreference.IN_APP -> 1
+                                DownloadTargetPreference.ONE_DM -> 2
+                                DownloadTargetPreference.EXTERNAL -> 3
+                                else -> 0
+                            }
+                            AlertDialog.Builder(context)
+                                .setTitle("Preferred download method")
+                                .setSingleChoiceItems(labels, selected) { dialog, which ->
+                                    preferredDownloader = when (which) {
+                                        1 -> DownloadTargetPreference.IN_APP
+                                        2 -> DownloadTargetPreference.ONE_DM
+                                        3 -> DownloadTargetPreference.EXTERNAL
+                                        else -> DownloadTargetPreference.ASK
+                                    }
+                                    DownloadTargetPreference.set(context, preferredDownloader)
+                                    dialog.dismiss()
+                                }
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .show()
+                        }
                     ),
                     Preference.PreferenceItem.SliderPreference(
                         icon = painterResource(R.drawable.arrow_or_edge_24px),
