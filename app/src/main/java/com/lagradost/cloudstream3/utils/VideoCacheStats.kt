@@ -4,9 +4,18 @@ import android.content.Context
 import android.net.Uri
 import android.text.format.Formatter
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicLong
 
 /** Byte counts observed by the app's playback and native download data sources. */
 object VideoCacheStats {
+    private val livePlaybackBytes = AtomicLong(0L)
+    private val liveDownloadBytes = AtomicLong(0L)
+
+    /** Bytes transferred during the current app process, updated as chunks arrive. */
+    fun recordLivePlaybackBytes(bytes: Long) { if (bytes > 0L) livePlaybackBytes.addAndGet(bytes) }
+    fun getLivePlaybackBytes(): Long = livePlaybackBytes.get()
+    fun getLiveDownloadBytes(): Long = liveDownloadBytes.get()
+
     private const val PREFS = "video_traffic_stats"
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -63,6 +72,7 @@ object VideoCacheStats {
     @Synchronized
     fun recordDownloadBytes(context: Context, bytes: Long, downloadId: Int?) {
         if (bytes <= 0L) return
+        liveDownloadBytes.addAndGet(bytes)
         val p = prefs(context)
         val id = downloadId?.toString() ?: "unknown"
         val key = "download_bytes_$id"
@@ -106,6 +116,8 @@ object VideoCacheStats {
 
     @Synchronized
     fun clear(context: Context) {
+        livePlaybackBytes.set(0L)
+        liveDownloadBytes.set(0L)
         val p = prefs(context)
         val labels = p.all.filterKeys { it.startsWith("cache_label_") }
         p.edit().clear().apply()
