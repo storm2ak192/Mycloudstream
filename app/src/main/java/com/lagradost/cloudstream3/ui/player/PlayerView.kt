@@ -209,8 +209,6 @@ class PlayerView @JvmOverloads constructor(
     var playerProgressbarRightIcon: ImageView? = null
     var playerProgressbarRightLevel1: ProgressBar? = null
     var playerProgressbarRightLevel2: ProgressBar? = null
-    /** Accessed by [PlayerGestureHelper.showOrHideSpeedUp]. */
-    internal var playerSpeedupButton: View? = null
     private var playerSpeedIndicator: TextView? = null
     var playerHolder: FrameLayout? = null
     private var exoDuration: TextView? = null
@@ -273,7 +271,6 @@ class PlayerView @JvmOverloads constructor(
         playerProgressbarRightLevel2 = root.findViewById(R.id.player_progressbar_right_level2)
         playerRew = root.findViewById(R.id.player_rew)
         playerRewHolder = root.findViewById(R.id.player_rew_holder)
-        playerSpeedupButton = root.findViewById(R.id.player_speedup_button)
         clockBatteryOverlay = root.findViewById(R.id.player_clock_battery_overlay)
         elapsedRemainingOverlay = root.findViewById(R.id.player_elapsed_remaining_overlay)
         playerSpeedIndicator = root.findViewById(R.id.player_speed_indicator)
