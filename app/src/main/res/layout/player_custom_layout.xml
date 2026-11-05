@@ -1143,7 +1143,7 @@
         android:textColor="@android:color/white"
         android:textSize="14sp"
         android:textStyle="bold"
-        android:visibility="visible"
+        android:visibility="gone"
         tools:ignore="HardcodedText" />
 
     <com.google.android.material.button.MaterialButton
