@@ -49,6 +49,7 @@ import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.cronet.CronetDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.extractor.metadata.id3.ChapterFrame
+import androidx.media3.extractor.metadata.id3.TextInformationFrame
 import androidx.media3.exoplayer.DecoderCounters
 import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.exoplayer.DefaultLivePlaybackSpeedControl
@@ -1664,12 +1665,14 @@ class CS3IPlayer : IPlayer {
                     } ?: 0L
                     val detected = (0 until metadata.length()).mapNotNull { index ->
                         metadata.get(index) as? ChapterFrame
-                    }.filterNot { it.isHidden }
-                        .filter { it.getStartTimeMs() != TIME_UNSET && it.getStartTimeMs() >= windowOffsetMs }
+                    }.filter { it.startTimeMs != TIME_UNSET.toInt() && it.startTimeMs.toLong() >= windowOffsetMs }
                         .mapIndexed { index, chapter ->
-                            val title = chapter.getTitle()?.toString()?.takeIf { it.isNotBlank() }
+                            val title = (0 until chapter.subFrameCount).mapNotNull { subIndex ->
+                                chapter.getSubFrame(subIndex) as? TextInformationFrame
+                            }.firstOrNull { it.id == "TIT2" }?.value?.takeIf { it.isNotBlank() }
+                                ?: chapter.chapterId.takeIf { it.isNotBlank() }
                                 ?: "Chapter ${index + 1}"
-                            PlayerChapter(title, (chapter.getStartTimeMs() - windowOffsetMs).coerceAtLeast(0L))
+                            PlayerChapter(title, (chapter.startTimeMs.toLong() - windowOffsetMs).coerceAtLeast(0L))
                         }.distinctBy { it.startMs }.sortedBy { it.startMs }
 
                     if (detected.isNotEmpty()) {
