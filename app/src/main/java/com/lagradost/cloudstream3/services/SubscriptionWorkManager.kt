@@ -136,6 +136,8 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
             val sourcePreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val seenItems = context.getSharedPreferences("source_notification_seen", Context.MODE_PRIVATE)
             val providers = APIHolder.apis.withLock { APIHolder.apis.toList() }
+                .filter { it.hasMainPage }
+                .distinctBy { it.name }
 
             providers.forEach { api ->
                 try {
